@@ -1,16 +1,18 @@
 # Avanti FY27 Org Reconciliation — Approach & Session Protocol
 
-**Current version:** v1.0
-**Last updated:** April 26, 2026
-**Workbook (source of truth):** `avanti_workbook.xlsx` — kept in Google Drive by Akshay
-**Visual chart:** `org_chart.html`
+**Current version:** v1.1
+**Last updated:** April 27, 2026
+**Workbook (source of truth):** `avanti_workbook.xlsx`
+**Visual chart:** `index.html`
 **This file:** `APPROACH.md`
+**Repo:** https://github.com/asaxena/AvantiBudget
+**Live site:** https://asaxena.github.io/AvantiBudget/
 
 ---
 
 ## ⚠️ Read this first if context has compressed
 
-Before doing **anything** in a new session — even if a summary block at the top of the conversation tells you what's going on — follow the **Session Start** protocol below. The summary may be incomplete or stale; the workbook in Google Drive is the source of truth.
+Before doing **anything** in a new session — even if a summary block at the top of the conversation tells you what's going on — follow the **Session Start** protocol below. The summary may be incomplete or stale; the GitHub repo is the source of truth.
 
 ---
 
@@ -20,28 +22,33 @@ Before doing **anything** in a new session — even if a summary block at the to
 |---|---|
 | Maintain the workbook structure and content | Claude |
 | Maintain APPROACH.md and changelog | Claude |
-| Regenerate the HTML chart | Claude |
-| **Keep the canonical workbook in Google Drive** | **Akshay** |
-| **Upload latest workbook + APPROACH.md to Drive at session end** | **Akshay** |
-| **Attach the latest workbook + APPROACH.md at session start** | **Akshay** |
+| Regenerate the HTML chart (index.html) | Claude |
+| **Commit updated files to the GitHub repo** | **Akshay** |
 
-Claude's container resets between sessions, so it cannot be the keeper of the canonical files. Akshay holds the Drive copy; Claude is the editor.
+Claude's container resets between sessions but can pull from GitHub raw URLs (no auth, no rate limits) at session start. Akshay commits to the repo at session end. GitHub Pages auto-deploys index.html.
 
 ---
 
 ## Session Start — at the beginning of every session
 
-### What Akshay does (one-time per session)
-Attach the latest `avanti_workbook.xlsx` and `APPROACH.md` from Drive to the chat. Without these, Claude is working blind.
+Claude pulls the three files directly from GitHub raw:
 
-### What Claude does
+```bash
+mkdir -p /home/claude/build
+curl -s -o /home/claude/build/avanti_workbook.xlsx https://raw.githubusercontent.com/asaxena/AvantiBudget/main/avanti_workbook.xlsx
+curl -s -o /home/claude/index.html               https://raw.githubusercontent.com/asaxena/AvantiBudget/main/index.html
+curl -s -o /home/claude/build/APPROACH.md         https://raw.githubusercontent.com/asaxena/AvantiBudget/main/APPROACH.md
+```
+
+Then:
+
 1. **Read APPROACH.md in full.** Methodology and conventions live here.
 
-2. **Confirm versions.** Open the attached workbook with openpyxl. Check the **Version** tab — top row is the current version. Cross-check that APPROACH.md's "Current version" header matches.
+2. **Confirm versions.** Open the workbook with openpyxl. Check the **Version** tab — newest entry is the current version. Cross-check that APPROACH.md's "Current version" header matches.
 
 3. **Review the workbook in tab order:**
    - **README** — orientation
-   - **Version** — changelog (NEWEST AT TOP). Note current version and recent changes
+   - **Version** — changelog. Note current version and recent changes
    - **Decisions** — every RM override and structural change made so far, with rationale
    - **Rules** — interpretation logic
    - **Open Questions** — pending clarifications
@@ -49,190 +56,173 @@ Attach the latest `avanti_workbook.xlsx` and `APPROACH.md` from Drive to the cha
    - **Employee Master (Final)** — current state of every person with original vs final RM/centre
 
 4. **Skim source replicas** if the user's request touches teachers, centres, or budget:
-   `Src - Centre Master`, `Src - PM-SPM-APM`, `Src - Teacher Alloc`, `Src - Personnel Budget`.
+   - `Src - Centre Master`, `Src - PM-SPM-APM`, `Src - Teacher Alloc`, `Src - Personnel Budget`
 
-5. **Only then** start the user's task. Don't guess from memory or a conversation summary alone.
+5. **Then start the user's task.** Don't guess at structure from memory.
 
-If APPROACH.md or the workbook isn't attached, **stop and ask Akshay to attach them** before doing any substantive work.
-
-Build pipeline lives at `/home/claude/build/`. Source xlsx files (re-pull from Sheets if needed): `/home/claude/teacher_alloc.xlsx` and `/home/claude/personnel.xlsx`. HTML chart at `/home/claude/org_chart.html`.
+The original Google Sheets (Centre Master, PM/SPM Mapping, Teacher Recruitment, Personnel Budget) are **read-only inputs**. Never modify them. All changes layer on top in the workbook. Source URLs are in the README tab.
 
 ---
 
-## Session End — before the final response of every session
+## Session End — present files for the user to commit
 
-### What Claude does
-After applying any change (RM override, role correction, new clarification, fixing a data issue, etc.):
+After applying any change, regenerating downstream views, and updating APPROACH.md:
 
-1. **Update the relevant workbook tab.** The workbook is the source of truth — never edit only the HTML chart.
-   - New RM override → add row to `Decisions`
-   - New rule applied → add row to `Rules`
-   - New clarification raised → add row to `Open Questions`
-   - New data-quality finding → add row to `Data Issues`
-   - Person's RM/centre/role changed → update their row in `Employee Master (Final)`
-   - Recruitment or budget change → regenerate `Reconciliation` and `Vacancy List`
+1. Save all three files to `/mnt/user-data/outputs/`:
+   - `avanti_workbook.xlsx`
+   - `index.html`
+   - `APPROACH.md`
 
-2. **Bump the version.** Add a new row to the top of the **Version** tab:
-   - Increment version (v1.1, v1.2, … v2.0 for major changes)
-   - Date in YYYY-MM-DD
-   - Updated by (e.g. "Akshay + Claude")
-   - Summary of changes (one or two sentences)
-   - Tabs touched (comma-separated)
+2. Call `present_files` so the user can download them.
 
-3. **Regenerate downstream views.** If the change affects org structure or teachers, also update `org_chart.html`.
+3. The user commits to https://github.com/asaxena/AvantiBudget. GitHub Pages auto-deploys to https://asaxena.github.io/AvantiBudget/ within ~1 minute.
 
-4. **Update this APPROACH.md.** New rule? Add to Rules section. Methodology change? Update relevant section. Bump "Current version" and "Last updated" at the top. Add a Changelog entry at the bottom.
-
-5. **Push all three to outputs** via `present_files` so Akshay has them inline:
-   `org_chart.html`, `avanti_workbook.xlsx`, `APPROACH.md`.
-
-6. **Tell Akshay clearly** at the end of the response:
-   > "Updated to v1.X. Please upload `avanti_workbook.xlsx` and `APPROACH.md` to the Drive folder, replacing the existing files (Drive will retain version history)."
-
-### What Akshay does
-- Download the three files from the chat.
-- Upload `avanti_workbook.xlsx` and `APPROACH.md` to the Drive folder, replacing the existing copies. Drive auto-versions, so prior copies remain accessible.
-- (Optional) Save `org_chart.html` somewhere convenient for sharing.
+There is no automated push — committing is a deliberate user action so the user can review changes before they go live.
 
 ---
 
-## Source files (Google Sheets, owned by various teams)
+## Source files (Google Sheets — read-only inputs)
 
-| Source | ID | What we use |
+| Source | URL | What we use |
 |---|---|---|
-| Centre Master | `1-SoEk4KWUgBSer_owdrnTNAR5tMIMZeKrq7931nfrzs` | 53 centres with category, system, owner, course, plan |
-| PM/SPM Mapping | `1QAbyh5DYdi0Ud3ElWNirZFDhs87gl68SV91gOZhJqmc` | 12 ops people (4 SPM + 2 PM + 6 APM) and clusters |
-| Teacher Recruitment | `16dQptFruBBNpV4abeD8I6opPLRcYJ1ozxB7oPzVWYCo` | "Latest 16 Apr" tab — allocations with cell-colour-encoded levels |
-| Personnel Budget | `1uaT_U7sbUnb_FnR56AQ_HJU0qd0TMirY8CMtyF8nZT8` | "FY27 - Consolidated Personnel" tab — 445 rows |
+| Centre Master | docs.google.com/spreadsheets/d/1-SoEk4KWUgBSer_owdrnTNAR5tMIMZeKrq7931nfrzs | 53 centres with category, system, owner, course, plan |
+| PM/SPM Mapping | docs.google.com/spreadsheets/d/1QAbyh5DYdi0Ud3ElWNirZFDhs87gl68SV91gOZhJqmc | 12 ops people (4 SPM + 2 PM + 6 APM) and cluster assignments |
+| Teacher Recruitment | docs.google.com/spreadsheets/d/16dQptFruBBNpV4abeD8I6opPLRcYJ1ozxB7oPzVWYCo | "Latest 16 Apr" tab — teacher allocations with cell-colour-encoded levels |
+| Personnel Budget | docs.google.com/spreadsheets/d/1uaT_U7sbUnb_FnR56AQ_HJU0qd0TMirY8CMtyF8nZT8 | "FY27 - Consolidated Personnel -" tab — 445 rows with AF, name, cc, cat, salary, RM |
+
+These files are not modified by us. We only read. All changes layer on top of them in the workbook.
+
+---
+
+## Workbook structure (16 tabs)
+
+| # | Tab | Purpose |
+|---|---|---|
+| 1 | README | Purpose, source links, snapshot date |
+| 2 | Version | Changelog (latest is v1.1, 2026-04-27) |
+| 3 | Decisions | Every RM override / structural change with rationale & source |
+| 4 | Rules | Interpretation logic in plain English |
+| 5 | Open Questions | Clarifications pending |
+| 6 | Data Issues | Findings to fix in source sheets |
+| 7 | Employee Master (Final) | Cleaned view: every person with original vs final RM/centre/role |
+| 8 | **Teacher Master** (was Teachers Audit) | Real teaching FTE only — 186 records (in budget, hire-needed, centre-reassigned, needs-budget-row, subject-gap) |
+| 9 | **Non-Teaching Master** (new in v1.1) | All active non-teaching + non-teaching vacancies — 370 records, with Budget Status flag |
+| 10 | Reconciliation | Full join of Recruitment ↔ Personnel Budget — 262 records (superset that feeds Teacher Master + Budget Corrections) |
+| 11 | Budget Corrections | Both teaching and non-teaching budget issues — 79 items (excess TBHs, no-alloc, vendors, NT needing budget rows) |
+| 12 | Vacancy List | All open positions across teaching and non-teaching (95 — salary column blanked since v1.1) |
+| 13 | Src - Centre Master | Source replica |
+| 14 | Src - PM-SPM-APM | Source replica |
+| 15 | Src - Teacher Alloc | Source replica with cell-colour-derived levels |
+| 16 | Src - Personnel Budget | Source replica (salary column blanked since v1.1 — actual salaries only in source Google Sheet) |
+
+When updating: edit the appropriate "decision" tabs first (Decisions / Rules / Open Questions / Data Issues), then propagate to Employee Master (Final), then regenerate Teacher Master / Non-Teaching Master / Reconciliation / Budget Corrections / Vacancy List, then regenerate index.html.
+
+---
+
+## HTML chart (`index.html`)
+
+8 tabs visible in the rendered chart:
+1. Akshay's Tree
+2. Vandana's Tree
+3. Centre Master (53 centres, frozen first column + sticky header, level badges next to teacher names)
+4. **Teacher Master** — 186 real teaching records
+5. **Non-Teaching Master** (new in v1.1) — 370 records (320 active/exit + 50 vacancies) with Budget Status filter
+6. Budget Corrections — 79 items (76 teaching + 3 non-teaching), with Side filter (Teaching / Non-Teaching)
+7. Vacancy List — 95 open positions, no salary column
+8. Unassigned (clarifications, no-RM employees, orphaned, exits)
+
+Mobile: tab bar replaced with dropdown menu below 768px.
+
+---
+
+## Salary handling (added v1.1)
+
+The workbook is shared broadly via the GitHub repo. Salary information is therefore **blanked across the published files**:
+- `Src - Personnel Budget` tab in the workbook: FY27 Salary column emptied
+- `Vacancy List` tab in the workbook: Salary column emptied
+- `index.html`: Salary column dropped from the Vacancy table
+
+Actual salary data remains in the **source Personnel Budget Google Sheet**, which is restricted to the right people. If a salary query comes up in chat, look it up in the source sheet directly — never re-add salary columns to the published files.
 
 ---
 
 ## Methodology
 
-### Why a workbook + chart, not just a chart
+### Build pipeline (in `/home/claude/build/`)
 
-The HTML chart is one rendering. The workbook is the source of truth: it holds decisions, rules, open questions, data issues, and the cleaned employee master. Any view (HTML, PDF, dashboard) should be regenerable from the workbook. **If the workbook and chart disagree, the workbook wins.**
+The reconciliation is built up in stages from the source xlsx files. Each stage produces a JSON intermediate that subsequent stages consume.
 
-### How information layers
+1. `step1_centre_master.py` → `centre_master.json` — 53 centres parsed with type/system/category, plus `needs_apc` flag
+2. `step2_teacher_master.py` → `teacher_master.json` — teachers from "Latest 16 Apr", with levels read from cell fill colour
+3. `step3_match_af_ids.py` → `teacher_master_v2.json` — AF IDs backfilled by matching names
+4. `step4_employee_master.py` → `employee_master.json` — 445 personnel rows with all RM overrides applied
+5. Reconciliation logic produces `teachers_reconciled_v2.json`
+6. HR pipeline produces `hr_tbhs.json`
+7. Output generation produces `index.html` and the workbook
 
-```
-SOURCE FILES (Google Sheets, owned by various teams)
-     │
-     ▼
-SOURCE REPLICAS (Src - * tabs in workbook — snapshot)
-     │
-     ▼
-RULES + DECISIONS (Rules tab + Decisions tab — interpretation layer)
-     │
-     ▼
-DERIVED OUTPUTS (Employee Master Final, Reconciliation, Vacancy List)
-     │
-     ▼
-RENDERED VIEW (org_chart.html)
-```
+### Key data conventions
 
-A change at any layer triggers regeneration of everything below it. Source-file changes require re-pulling.
+- **AF IDs** are the join key everywhere. `AFxxx` for regular employees, `AFIxxx` for interns, `TBHxxx` for budget-only TBH slots.
+- **Centre names** are normalised through aliases (see Rules tab). E.g. "JNV Odisha 2" = "JNV Puri".
+- **Cell colours** in the recruitment sheet encode teacher level. Map below.
+- **APC is centre-specific.** Required only at the 22 centres where the recruitment sheet's APC column has a name or empty cell. Centres with "NA" in APC don't need APC.
 
-### Workbook tabs
+### Reconciliation statuses (8 categories)
 
-| # | Tab | Purpose | Updated when |
-|---|---|---|---|
-| 1 | README | Orientation, source links, version reference | Every snapshot |
-| 2 | Version | Append-only changelog with date/version/summary | Every session that changes anything |
-| 3 | Decisions | Every RM/structural change with rationale | Any RM override, role change, structural change |
-| 4 | Rules | Interpretation logic | New rule emerges or existing one changes |
-| 5 | Open Questions | Pending clarifications | New question raised or existing resolved |
-| 6 | Data Issues | Findings to fix in source sheets | New data-quality issue surfaces |
-| 7 | Employee Master (Final) | Cleaned state of every person | Any RM/centre/role/status change |
-| 8 | Reconciliation | Teacher alloc ⇄ budget reconciliation | Recruitment or budget changes; APC rule changes |
-| 9 | Vacancy List | All open positions | Reconciliation regenerates; new TBHs added |
-| 10-13 | Src - * | Source replicas | Re-pulled when sources update |
-
----
-
-## Rules (current)
-
-The workbook's Rules tab should mirror this list.
-
-1. **Role priority.** When a person appears in multiple sources: (1) PM/SPM/APM mapping, (2) Teacher recruitment alloc, (3) Personnel budget designation (fallback).
-
-2. **Centre allocation = current role.** If allocated to a centre as a teacher, that's their role — they move out of any non-teaching team.
-
-3. **Centre aliases.** `JNV Odisha 2 = JNV Puri`. `Live Class Punjab/HP/UK/Delhi = Online/Boot Camp Punjab/HP/UK/Delhi`. `Foundation Math = Mathematics`.
-
-4. **APC requirement.** APC required ONLY where the recruitment sheet's APC column has a name OR is explicitly empty. Centres where APC = "NA" do NOT need APC. (22 of 53 centres need APC.)
-
-5. **Cell colour → level mapping** (Latest 16 Apr tab):
-   - `FF0000FF` JEE Mains Plus (blue)
-   - `FF00FFFF` JEE Advanced (cyan)
-   - `FF00FF00` JEE Main (green)
-   - `FFFF00FF` NEET (magenta)
-   - `FFFF9900` MBBS (orange)
-   - `FF980000` CET (dark red)
-   - `FF274E13` Foundation (dark green)
-   - `FFFFFF00` (yellow) substitute / training-team — inherits centre's primary level
-
-6. **Contracted vendors don't need budget rows.** SRL, Brilliant, Gravity, etc. — flagged as `vendor_no_budget_needed`.
-
-7. **"Centre Reassigned" semantics.** When alloc cc differs from budget cc, the BUDGET should be updated (allocation reflects current truth).
-
-8. **Same-name disambiguation.** Always use AF ID as unique key. AF869 Nikita Kshatriya ≠ AF847 Nikita Shrikesh Powar.
-
-9. **Exits.** Removed from active counts; reports reassigned. Currently exited: Aman Jakar, Ajay Kumar Dasari, Gurvir Singh, Vinod Mehto, Pulak Maity, Ghazala Firdos, Atul Kumar Jha, Gaurav Kumar, Akash Singh, Bhagyashree Harasur, Md. Nisar Mollick, Suguna Sri Vagvala, Raj Kumar.
-
-10. **Long Leave.** Saksham Srivastava on long leave; reports moved to Savin Khandelwal under Panchali Dutta.
-
-11. **TBH classification.**
-    - Auto-flagged TBH = subject gap at centre (derived)
-    - Budget TBH = TBH001-TBH116 in personnel sheet (real budget slots)
-    - Match by centre. Excess budget TBHs → "Remove". Excess auto-flagged → "Add slot + hire".
-
----
-
-## Reconciliation status taxonomy
-
-| Status | Meaning | Action |
+| Status | Meaning | Lives in tab |
 |---|---|---|
-| `in_budget` | Named teacher's alloc cc matches budget cc | None |
-| `hire_needed_with_budget` | Subject gap with budget TBH already there | Hire |
-| `centre_reassigned` | Named teacher in budget, allocated elsewhere | Update budget cc |
-| `needs_budget_row` | Allocated teacher with no budget line | Add to budget |
-| `hire_needed_no_budget` | Subject gap, no budget slot | Add slot + hire |
-| `tbh_excess_remove` | Budget TBH at centre with no subject gap | Delete or reallocate |
-| `no_alloc` | Named in budget but not at any centre | Investigate |
-| `vendor_no_budget_needed` | Contractor | None |
+| `✓ In Budget` | Alloc cc matches budget cc | Teacher Master |
+| `⊙ Hire needed (slot reserved)` | Subject gap with budget TBH already at centre | Teacher Master |
+| `⇄ Centre Reassigned — UPDATE budget` | Named teacher's alloc cc differs from budget cc | Teacher Master |
+| `⚠ Needs budget row — ADD` | Allocated FTE but no budget row | Teacher Master |
+| `⚠ Subject gap — ADD slot + hire` | Subject gap with no budget slot | Teacher Master |
+| `✕ Excess TBH — REMOVE` | Budget TBH at centre with no subject gap | Budget Corrections |
+| `? Budgeted, no centre alloc` | Person budgeted but not allocated | Budget Corrections |
+| `— Vendor (no budget needed)` | External contractor | Budget Corrections |
 
-`Reconciliation` tab keeps all 8. The chart's `Teachers Audit` tab shows the 6 real-teacher statuses; the other 2 go to `Budget Corrections`.
+Non-teaching `⚠ Needs budget row — ADD` and `? Pending clarification` flags also feed into Budget Corrections.
 
----
+### Role priority order
 
-## Worked example: applying a change
+When a person appears in multiple sources:
+1. **PM/SPM/APM mapping** = current role (highest priority)
+2. **Teacher recruitment allocation** = current role
+3. **Personnel budget designation** = fallback role
 
-Akshay says: "Move person X from manager A to manager B."
-
-1. Find X's AF ID in `Employee Master (Final)`. Note current `Final RM`.
-2. Add row to `Decisions`: AF ID, Person, Original RM (from `Src - Personnel Budget`), New RM, Type ("Reporting line"), Rationale (user instruction), Source.
-3. Update X's row in `Employee Master (Final)`: change `Final RM`, set `Changes Applied` to include "RM changed".
-4. Update `org_chart.html`: remove X from A's `<ul>`, add to B's. If B is a leaf, convert to a `<details>` block.
-5. Add new row to **Version** tab (newest at top): bumped version, today's date, updated by, summary, tabs touched.
-6. Sense check: `Employee Master (Final)` Active count = active rows in `Src - Personnel Budget` (minus exits, minus role-changed-to-teaching, minus AF313/AF314).
-7. Update APPROACH.md: bump "Current version" and "Last updated"; add Changelog entry.
-8. Push all three to outputs via `present_files`.
-9. Tell Akshay to upload the workbook + APPROACH.md to Drive.
+This prevents misclassifying ops people as teachers when their AF appears in multiple sheets.
 
 ---
 
-## Changelog
+## Cell colour → Teacher level map
 
-Newest at top. One line per session summarizing what changed.
+Read directly from `Latest 16 Apr` tab cell fill colours:
 
-- **2026-04-26 v1.0** — Initial workbook build (13 tabs incl. Version). Major decisions: JNV PMU Sr Mgr wraps Urvashi/Lorina; Mushahid + 6 telecallers → Juned; Shivangi Trivedi → Savin (with Subhas); Abhinav → Deepansh team; APC required only where named (27 phantom TBHs removed); Centre Reassigned status added; Vacancy List flat with subject filters; Budget Corrections split from Teachers Audit; Centre Master sticky header + first column; mobile dropdown menu. APPROACH.md created as session protocol with user-handled Drive uploads.
+| Hex | Level | Short |
+|---|---|---|
+| FF0000FF | JEE Mains Plus | JM+ |
+| FF00FFFF | JEE Advanced | Adv |
+| FF00FF00 | JEE Main | JM |
+| FFFF00FF | NEET | NEET |
+| FFFF9900 | MBBS | MBBS |
+| FF980000 | CET | CET |
+| FF274E13 | Foundation | Fnd |
+| FFFFFF00 | Yellow = substitute/training-team teacher; inherits centre's primary level |
 
 ---
 
-## Known limitations
+## Centre aliases
 
-- **Source files may have moved on.** If Personnel Budget or Teacher Recruitment has been edited since the snapshot date in the Version tab, re-pull before making decisions.
-- **Cell colour reading is fragile.** If the recruitment sheet owner re-themes, the colour map breaks. Validate one or two known teachers' levels after any re-pull.
-- **AF ID coverage incomplete.** 28 teachers in recruitment have no AF ID (likely new joiners). Listed in Data Issues.
-- **TBH subject info missing.** All TBH001-TBH116 rows have empty designation/level columns. Listed in Data Issues.
+| Variant 1 | Variant 2 | Used in workbook |
+|---|---|---|
+| JNV Odisha 2 - CoE | JNV Puri - CoE | JNV Puri - CoE |
+| Live Class - Punjab, Himachal, Uttarakhand, Delhi | Online / Boot Camp - Punjab, Himachal, Uttarakhand, Delhi | Online / Boot Camp variant |
+| Foundation Mathematics | Mathematics | Mathematics (for Foundation centres) |
+
+---
+
+## Change Log
+
+| Version | Date | Summary |
+|---|---|---|
+| v1.0 | 2026-04-26 | Initial workbook build. 60 RM/structural decisions applied. Cleaned Employee Master with original vs final RM/centre. APPROACH.md created. Drive folder set as source of truth. |
+| v1.1 | 2026-04-27 | Restructured tabs: split Reconciliation into Teacher Master (real teaching FTE, 186) and Budget Corrections (teaching + non-teaching budget issues, 79). Added Non-Teaching Master tab (370 records: 320 active/exit + 50 vacancies, with Budget Status flag). Hid salary columns across the workbook (Personnel Budget Src tab + Vacancy List + HTML Vacancy table). Migrated source-of-truth from Google Drive to GitHub repo asaxena/AvantiBudget. HTML renamed to index.html for GitHub Pages root. |
