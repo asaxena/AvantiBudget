@@ -1,6 +1,6 @@
 # Avanti FY27 Org Reconciliation — Approach & Session Protocol
 
-**Current version:** v1.1
+**Current version:** v1.7
 **Last updated:** April 27, 2026
 **Workbook (source of truth):** `avanti_workbook.xlsx`
 **Visual chart:** `index.html`
@@ -225,4 +225,10 @@ Read directly from `Latest 16 Apr` tab cell fill colours:
 | Version | Date | Summary |
 |---|---|---|
 | v1.0 | 2026-04-26 | Initial workbook build. 60 RM/structural decisions applied. Cleaned Employee Master with original vs final RM/centre. APPROACH.md created. Drive folder set as source of truth. |
+| v1.7 | 2026-04-27 | TBH137 fixed in HTML (now under TBH136/Abhishek, not Deepak); Nitin KR→Exit; AF370 Gurvir explicit Exit row added; Manvi added as Director Girls in STEM (placeholder ID 'MANVI', AF ID needed); TBH145 Director Girls in STEM under Panchali; Ananya→Manvi. nt_exits 4→6. |
+| v1.6 | 2026-04-27 | NT: TBH116→Tech Interns under Surya Teja; Subhas M→unassigned; Shivangi Goyal→TBH142 (Medak APM); Rameez replaces Gurvir (AFI125/126 inherit); Rakesh Negi→Nazneen; Toshiba→Exit; TBH118 duplicate deleted. nt_no_rm 16→13, nt_exits 3→4, nt_orphaned 2→0. |
+| v1.5 | 2026-04-27 | Teaching: JNV Chandigarh moved from Deepak (AF233) SPM cluster to SPM TBH 3 (TBH136) → PM TBH 1 (TBH137) under Abhishek (AF693). Triggered by updated Master Sheet — SPM column changed to '-'. NT Master TBH137 RM already updated (AF233 → TBH136) in prior step. |
+| v1.4 | 2026-04-27 | NT: TBH118 Major Grants → Ruchika; Abhinav Gupta → Surya Teja; AFI119 Preetham Gowda marked Exit; Manzar → Lorina; Saksham Long Leave; TBH028 → Ananya; new TBH133 (JP Morgan) under Jotika; TBH026/027/116 city coordinators under TBH133. Teaching: rebuilt from updated Master Sheet (Name-AFID format); Aryaman now direct SPM-level under Siva; Abhishek group labelled SPM TBH. nt_no_rm 19→15, exits 2→3. |
+| v1.3 | 2026-04-27 | NT org changes: AF785 Rahul Kumar → Tushanka (AF694); TBH004 Priyanka Palshetkar → Pritam (AF287); TBH119 APM Alumni SAP → Jotika (AF514); TBH117 Fundraising Specialist CSR → Ruchika (AF748); TBH118 Sr Manager Major Grants → Prafful (AF382); AF649 Namisha Singla → Shahied (AF387). Teaching tree rebuilt from Master Sheet Center Status 26-27: APM TBH names now specific (TBH 1–6), JNV Adilabad shown as separate CoE+Nodal entries, nt_no_rm reduced from 24 → 19. |
+| v1.2 | 2026-04-27 | Corrected Abhishek Kumar RM: AF693 (Head Operation - North) → Agny; reverted AF838 to Panchali Dutta. Siva Dasari (AF219) moved to direct report of Agny (was under Subramanya). Changes applied to NT Master, Employee Master, Decisions tab, and HTML. |
 | v1.1 | 2026-04-27 | Restructured tabs: split Reconciliation into Teacher Master (real teaching FTE, 186) and Budget Corrections (teaching + non-teaching budget issues, 79). Added Non-Teaching Master tab (370 records: 320 active/exit + 50 vacancies, with Budget Status flag). Hid salary columns across the workbook (Personnel Budget Src tab + Vacancy List + HTML Vacancy table). Migrated source-of-truth from Google Drive to GitHub repo asaxena/AvantiBudget. HTML renamed to index.html for GitHub Pages root. |
