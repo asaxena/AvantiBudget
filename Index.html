@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Avanti Fellows FY27 Org Structure</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1a2a3a;font-size:13px}
+header{background:linear-gradient(135deg,#1a3a5c,#0e6655);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:12px}
+header h1{font-size:1.2rem;font-weight:700}
+header span{font-size:.8rem;opacity:.7;margin-left:auto}
+.tabs{display:flex;background:#fff;border-bottom:2px solid #d0dce8;padding:0 20px;position:sticky;top:0;z-index:10}
+.tab{padding:10px 22px;cursor:pointer;font-weight:600;font-size:.85rem;color:#5a7a9a;border-bottom:3px solid transparent;transition:.15s;user-select:none}
+.tab.active{color:#1a3a5c;border-bottom-color:#0e6655}
+.tab:hover:not(.active){color:#1a3a5c}
+.panel{display:none;padding:16px 20px;height:calc(100vh - 90px);overflow-y:auto}
+.panel.active{display:block}
+.toolbar{display:flex;gap:8px;margin-bottom:14px;align-items:center;flex-wrap:wrap;position:sticky;top:0;background:#f0f4f8;padding:6px 0;z-index:5}
+.toolbar input{padding:6px 11px;border:1px solid #c8d8e8;border-radius:6px;font-size:.82rem;width:220px;outline:none}
+.toolbar input:focus{border-color:#0e6655}
+.toolbar button{padding:5px 12px;border:1px solid #c8d8e8;border-radius:6px;background:#fff;cursor:pointer;font-size:.78rem;color:#1a3a5c;transition:.12s}
+.toolbar button:hover{background:#e6f4f0;border-color:#0e6655}
+.stats{font-size:.75rem;color:#7a9ab0;margin-left:auto}
+.section-title{font-size:.75rem;font-weight:700;color:#7a9ab0;text-transform:uppercase;letter-spacing:.6px;margin:12px 0 6px}
+
+/* NT Tree */
+.two-col{display:flex;gap:20px;flex-wrap:wrap}
+.two-col>div{flex:1;min-width:320px}
+ul.tree,ul.children{list-style:none;padding-left:0}
+ul.children{padding-left:18px;border-left:1px solid #d0dce8;margin-left:8px}
+li{position:relative}
+.node{display:inline-flex;align-items:flex-start;gap:5px;cursor:pointer;user-select:none;margin:2px 0}
+.toggle{min-width:14px;font-size:.75rem;color:#8aaa9a;padding-top:3px}
+.node-card{background:#fff;border:1px solid #d8e4f0;border-radius:7px;padding:5px 10px;transition:.12s;display:inline-block}
+.node-card:hover{border-color:#0e6655;box-shadow:0 2px 5px rgba(14,102,85,.1)}
+.root-card{background:linear-gradient(135deg,#1a3a5c,#0e6655)!important;color:#fff!important;border:none!important}
+.tbh-card{background:#fffbf0!important;border-color:#e8c84a!important}
+.hi{background:#fff9e0!important;border-color:#e8c000!important;box-shadow:0 0 0 2px #e8c00044!important}
+.dim{opacity:.25!important}
+.nrow{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.nname{font-weight:600;font-size:.82rem}
+.root-card .nname{color:#fff}
+.nid{font-size:.7rem;color:#9ab0c0;font-family:monospace}
+.root-card .nid{color:#a0d0c0}
+.ndesig{font-size:.72rem;color:#6080a0;margin-top:1px}
+.root-card .ndesig{color:#b0d8cc}
+.badge{font-size:.62rem;padding:1px 5px;border-radius:3px;font-weight:700}
+.b-tbh{background:#fff0c0;color:#8a6000}
+.b-not{background:#ffe0e0;color:#9a0000}
+.b-exit{background:#f0d8d8;color:#7a0000}
+.b-orph{background:#f5ead0;color:#7a4400}
+
+.legend{display:flex;align-items:center;gap:12px;font-size:.72rem;color:#5a7a9a;flex-wrap:wrap;margin-left:auto}
+.legend-item{display:flex;align-items:center;gap:4px}
+.unmapped-wrap{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.um-card{background:#fff5f5;border:1px solid #e8c0c0;border-radius:6px;padding:4px 9px;font-size:.75rem}
+.um-card.tbh-um{background:#fffbf0;border-color:#e8d08a}
+
+/* Teaching Tree - full hierarchy */
+.t-root{background:#fff;border:1px solid #d0dce8;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.mgmt-hdr{padding:10px 16px;cursor:pointer;display:flex;align-items:center;gap:8px;user-select:none}
+.mgmt-hdr.lv0{background:linear-gradient(135deg,#1a3a5c,#0e6655);color:#fff}
+.mgmt-hdr.lv1{background:#1a4a6c;color:#fff}
+.mgmt-hdr.lv2{background:#eaf2fb;color:#1a3a5c;border-top:1px solid #c8d8ec}
+.mgmt-hdr h3{font-size:.9rem;font-weight:700;flex:1}
+.mgmt-hdr .tag{font-size:.68rem;padding:2px 7px;border-radius:10px;background:rgba(255,255,255,.18);white-space:nowrap}
+.mgmt-hdr.lv2 .tag{background:#d0e8f8;color:#1a5a8a}
+.mgmt-body{padding:0}
+.spm-block{margin:8px 12px;background:#f4f8fc;border:1px solid #c4d8ec;border-radius:8px;overflow:hidden}
+.spm-hdr{padding:7px 12px;cursor:pointer;display:flex;align-items:center;gap:8px;background:#e2eff8;user-select:none}
+.spm-hdr h4{font-size:.83rem;font-weight:700;color:#1a3a5c;flex:1}
+.spm-body{padding:8px 12px}
+.pm-block{margin-bottom:8px;background:#fff;border:1px solid #d4e4f4;border-radius:7px;overflow:hidden}
+.pm-hdr{padding:6px 10px;cursor:pointer;display:flex;align-items:center;gap:6px;background:#f0f6fc;user-select:none}
+.pm-hdr h5{font-size:.8rem;font-weight:600;color:#1a3a5c;flex:1}
+.pm-body{padding:6px 10px 8px}
+.apm-row{margin-bottom:8px}
+.apm-pill{display:inline-flex;align-items:center;gap:5px;background:#e4f4ed;border:1px solid #90c4a8;border-radius:5px;padding:3px 8px;font-size:.72rem;font-weight:700;color:#0a5a3a;margin-bottom:5px}
+.centres-grid{display:flex;flex-wrap:wrap;gap:6px}
+.ctr-card{background:#fff;border:1px solid #d0dce8;border-radius:7px;overflow:hidden;min-width:190px;max-width:260px;cursor:pointer;transition:.12s}
+.ctr-card:hover{border-color:#0e6655;box-shadow:0 2px 5px rgba(14,102,85,.1)}
+.ctr-hdr{padding:5px 10px;background:#f8fafc;display:flex;align-items:center;gap:5px}
+.ctr-name{font-size:.78rem;font-weight:700;color:#1a2a3a;flex:1}
+.ctr-body{padding:5px 10px 7px;display:none}
+.teachers-grid{display:flex;flex-wrap:wrap;gap:4px}
+.t-node{background:#f4f8fc;border:1px solid #d0dce8;border-radius:5px;padding:3px 7px;font-size:.7rem;cursor:default}
+.t-node.tbh-t{background:#fffbf0;border-color:#e8c84a}
+.t-subj{font-weight:700;font-size:.63rem;color:#0e6655;min-width:14px;display:inline-block}
+.t-name{font-weight:600}
+.t-id{font-size:.62rem;color:#9ab0c0;font-family:monospace}
+.t-lvl{font-size:.6rem;padding:1px 4px;border-radius:3px;margin-top:2px;display:inline-block}
+.chevron{font-size:.72rem;opacity:.5;transition:.15s}
+.mgmt-hdr.collapsed .chevron,.spm-hdr.collapsed .chevron,.pm-hdr.collapsed .chevron{transform:rotate(-90deg)}
+
+/* Teaching tree - NT card style */
+.ctr-teach-card{background:#f0f8ff!important;border-color:#b0d0e8!important}
+.teach-teachers{margin:3px 0 3px 22px;padding:5px 8px;background:#f8fbff;border:1px solid #d8eaf8;border-radius:5px;display:flex;flex-wrap:wrap;gap:3px}
+.tbh-section{margin-top:16px;background:#fff;border:1px solid #e8d890;border-radius:10px;overflow:hidden}
+.tbh-section-hdr{background:#fffbe0;padding:9px 14px;cursor:pointer;display:flex;align-items:center;gap:8px;user-select:none}
+</style>
+</head>
+<body>
+<header>
+  <h1>Avanti Fellows · FY27 Org Structure</h1>
+  <span>April 27, 2026</span>
+</header>
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('nt')">Non-Teaching Org</div>
+  <div class="tab" onclick="switchTab('teaching')">Teaching Org</div>
+</div>
+<div id="panel-nt" class="panel active">
+  <div class="toolbar">
+    <input type="text" id="nt-search" placeholder="Search name / designation / ID…" oninput="filterNT(this.value)">
+    <button onclick="expandAll()">Expand All</button>
+    <button onclick="collapseAll()">Collapse All</button>
+    <span class="stats" id="nt-stats"></span>
+  <div class="legend">
+    <span style="font-weight:700;color:#7a9ab0;text-transform:uppercase;letter-spacing:.5px;font-size:.68rem">Key:</span>
+    <span class="legend-item"><span class="badge b-tbh">TBH</span> Open vacancy</span>
+    <span class="legend-item"><span class="badge b-not">NP</span> Notice period</span>
+    <span class="legend-item"><span class="badge b-exit">Exit</span> Has exited</span>
+    <span class="legend-item"><span class="badge b-orph">Orph</span> Manager exited</span>
+  </div>
+  </div>
+  <div id="nt-wrap"></div>
+</div>
+<div id="panel-teaching" class="panel">
+  <div class="toolbar">
+    <input type="text" id="t-search" placeholder="Search centre / teacher / SPM / PM…" oninput="filterT(this.value)">
+    <button onclick="expandAllT()">Expand All</button>
+    <button onclick="collapseAllT()">Collapse All</button>
+    <span class="stats" id="t-stats"></span>
+  <div class="legend">
+    <span style="font-weight:700;color:#7a9ab0;text-transform:uppercase;letter-spacing:.5px;font-size:.68rem">Key:</span>
+    <span class="legend-item"><span class="badge b-tbh">TBH</span> Open vacancy</span>
+    <span class="legend-item"><span class="badge b-not">NP</span> Notice period</span>
+    <span class="legend-item"><span class="badge b-exit">Exit</span> Has exited</span>
+    <span class="legend-item"><span class="badge b-orph">Orph</span> Manager exited</span>
+  </div>
+  </div>
+  <div id="t-wrap"></div>
+</div>
+<script>
+const D={"nt_akshay":{"id":"AF314","name":"Akshay Saxena","desig":"Chief Executive Officer","fn":"Org","status":"Active","children":[{"id":"AF803","name":"Anushree Majumdar","desig":"Strategic Communication Lead","fn":"Org","status":"Active","children":[]},{"id":"AF814","name":"Divya Singh","desig":"Head - Grants","fn":"Org","status":"Active","children":[]},{"id":"AF369","name":"Joash John Cornelius","desig":"Senior Communication Specialist","fn":"Org","status":"Active","children":[{"id":"TBH130","name":"TBH - Manager Communications","desig":"Manager Communications","fn":"Org","status":"TBH","children":[]}]},{"id":"AF382","name":"Prafful Chugh","desig":"Head - CSR Partnerships","fn":"Org","status":"Active","children":[{"id":"AF797","name":"Sarah Alaqband","desig":"Fundraising and Donor Management Specialist","fn":"Org","status":"Active","children":[]},{"id":"AF830","name":"Sayali Pethe","desig":"Fundraising & Donor Management Specialist","fn":"Org","status":"Active","children":[]},{"id":"TBH129","name":"TBH - Sr. Manager CSR","desig":"Sr. Manager CSR","fn":"Org","status":"TBH","children":[]}]},{"id":"AF287","name":"Pritam Sukumar","desig":"Vice President Technology","fn":"Tech - E","status":"Active","children":[{"id":"AF696","name":"Ankur C Doshi","desig":"Software Developer","fn":"Tech - E","status":"Active","children":[]},{"id":"AF246","name":"Deepansh Mathur","desig":"Principal Software Development Engineer","fn":"Tech - E","status":"Active","children":[{"id":"AF627","name":"Aman Bahuguna","desig":"Software Development Engineer II","fn":"Tech - E","status":"Active","children":[]}]},{"id":"AF271","name":"Dhyaneshwaran C","desig":"Senior Product Manager","fn":"Product Manager","status":"Active","children":[{"id":"AF581","name":"Amogh Pramod Gawaskar","desig":"Product Manager","fn":"Product Manager","status":"Active","children":[]}]},{"id":"AF511","name":"Poojita Srinivisan","desig":"Senior Product Manager","fn":"Product Manager","status":"Active","children":[{"id":"AF891","name":"Sanghamitra Patil","desig":"Product Manager","fn":"Product Manager","status":"Active","children":[]}]},{"id":"AF375","name":"Suryateja B V","desig":"Software Development Engineer III","fn":"Tech - E","status":"Active","children":[{"id":"AF844","name":"Abhinav Gupta","desig":"Software Developer","fn":"Tech - E","status":"Active","children":[]},{"id":"TBH116","name":"TBH - Tech Interns","desig":"Tech Intern (TBH)","fn":"Tech - E","status":"Active","children":[]}]},{"id":"TBH004","name":"TBH - Priyanka Palshetkar","desig":"","fn":"","status":"Active","children":[]},{"id":"AF694","name":"Tushanka Nair","desig":"Product Head - User Research","fn":"Tech - E","status":"Active","children":[{"id":"AF785","name":"Rahul Kumar","desig":"Senior Program Manager- Research","fn":"Product Manager","status":"Active","children":[]},{"id":"AF811","name":"Shalini Jha","desig":"Junior UX Researcher","fn":"Tech - E","status":"Active","children":[]}]},{"id":"AF228","name":"Venu Reddy","desig":"Senior Data Analyst","fn":"Data","status":"Active","children":[{"id":"AF342","name":"Shashank Dogra","desig":"Program Manager","fn":"Data","status":"Active","children":[]},{"id":"AF383","name":"Somesh Upadhyay","desig":"Product Manager","fn":"Data","status":"Active","children":[]},{"id":"AFI120","name":"Srushti Y R","desig":"Program Intern","fn":"Field Support","status":"Active","children":[]}]}]},{"id":"AF748","name":"Ruchika Khemani","desig":"CSR- Lead","fn":"Org","status":"Active","children":[{"id":"TBH117","name":"TBH - Fundraising Specialist CSR","desig":"","fn":"","status":"","children":[]},{"id":"TBH128","name":"TBH - Sr. Manager Major Grants","desig":"Sr. Manager Major Grants","fn":"Org","status":"TBH","children":[]}]},{"id":"AF231","name":"Saksham Srivastava","desig":"Director - Strategy and New Initiatives","fn":"Org","status":"Long Leave","children":[]},{"id":"AF387","name":"Shahied Fazal Chouhan","desig":"Head- Government Relations","fn":"Operations - B","status":"Active","children":[{"id":"AF649","name":"Namisha Singla","desig":"Senior Program Associate","fn":"Operations - B","status":"Active","children":[]},{"id":"AF439","name":"Praatibh Mishra","desig":"Senior Program Manager","fn":"Operations - B","status":"Active","children":[{"id":"AF251","name":"Ahmad Umair Usmani","desig":"Senior Subject Matter Expert","fn":"Operations - B","status":"Active","children":[]},{"id":"AF537","name":"Shubhangni Garg","desig":"Senior Program Associate","fn":"Operations - B","status":"Active","children":[]},{"id":"AF861","name":"Twinkal","desig":"Program Associate","fn":"Operations - B","status":"Active","children":[]}]},{"id":"TBH131","name":"TBH - Sr. Manager JNV","desig":"Sr. Manager JNV","fn":"Operations - A","status":"TBH","children":[{"id":"AF862","name":"Lorina Anal SP","desig":"Senior Program Manager","fn":"Operations - B","status":"Active","children":[{"id":"AF858","name":"Md Manzar Alam","desig":"Program Manager","fn":"Operations - A","status":"Active","children":[]},{"id":"AF870","name":"Natasha Singh","desig":"Associate Program Manager","fn":"Operations - B","status":"Active","children":[]},{"id":"AF863","name":"Reshu Bajpai","desig":"Program Associate","fn":"Operations - B","status":"Active","children":[]},{"id":"AF864","name":"Zuchamo T Humtsoe","desig":"Program Associate","fn":"Operations - B","status":"Active","children":[]}]},{"id":"AF707","name":"Urvashi Makwana","desig":"Program Manager","fn":"Operations - B","status":"Active","children":[{"id":"AF865","name":"Ayesha Siddiqa Karim Sayed","desig":"Senior Program Associate","fn":"Operations - B","status":"Active","children":[]},{"id":"AF894","name":"Deepak Jonwal","desig":"Program Associate","fn":"Operations - B","status":"Active","children":[]},{"id":"AFI117","name":"Harsh Gajjar","desig":"Program Intern","fn":"Field Support","status":"Active","children":[]},{"id":"AF866","name":"Madhavi Kolla","desig":"Senior Program Associate","fn":"Operations - B","status":"Active","children":[]},{"id":"AF867","name":"Roopam Singh","desig":"Program Associate","fn":"Operations - B","status":"Active","children":[]}]}]},{"id":"TBH132","name":"TBH - Sr. Manager South India PMU","desig":"Sr. Manager South India PMU","fn":"Operations - A","status":"TBH","children":[{"id":"AF576","name":"Mohammed Raffiq A","desig":"Senior Program Manager - Training","fn":"Operations - A","status":"Active","children":[{"id":"AF868","name":"J. Nandhini","desig":"Program Intern- Typist","fn":"Field Support","status":"Active","children":[]}]},{"id":"AF579","name":"Sitrarasi R","desig":"Senior Program Manager - Academics","fn":"Operations - A","status":"Active","children":[{"id":"AF639","name":"Anandhi R","desig":"Program Associate","fn":"Operations - B","status":"Active","children":[]},{"id":"AFI096","name":"Girija.P","desig":"Program Intern -Typist","fn":"Field Support","status":"Active","children":[]},{"id":"AF666","name":"Koushik Shiheva","desig":"Program Associate (Content)","fn":"Content Creator","status":"Active","children":[]},{"id":"AF812","name":"Nivetha R","desig":"Junior Program Associate","fn":"Operations - A","status":"Active","children":[]},{"id":"AF813","name":"Zeenath Hamsa","desig":"Senior Telecaller","fn":"Telecaller","status":"Active","children":[]}]}]}]},{"id":"TBH146","name":"TBH - Sr. Manager Industry & Corporate Relations","desig":"Sr. Manager Industry & Corporate Relations","fn":"Org","status":"TBH","children":[]}]},"nt_vandana":{"id":"AF313","name":"Vandana Goyal","desig":"Chief Executive Officer","fn":"Org","status":"Active","children":[{"id":"AF100","name":"Agny Ganesh","desig":"Senior Director Operation","fn":"Operations - A","status":"Active","children":[{"id":"AF693","name":"Abhishek Kumar","desig":"Head Operation - North","fn":"Operations - A","status":"Active","children":[{"id":"AF233","name":"Deepak Gupta","desig":"Deputy Head -Operation","fn":"Operations","status":"Active","children":[{"id":"AF793","name":"Md Shahnwaj Alam","desig":"Associate Program Manager","fn":"Operations","status":"Active","children":[]},{"id":"AF854","name":"Prashant Kumar","desig":"Associate Program Manager","fn":"Operations - A","status":"Active","children":[]}]},{"id":"TBH136","name":"TBH - SPM TBH 3","desig":"SPM TBH 3","fn":"Operations","status":"TBH","children":[{"id":"TBH144","name":"TBH - APM TBH 6","desig":"APM TBH 6","fn":"Operations","status":"TBH","children":[]},{"id":"TBH137","name":"TBH - PM TBH 1","desig":"PM TBH 1","fn":"Operations","status":"TBH","children":[]}]}]},{"id":"AF514","name":"Jotika Devi","desig":"Program Manager","fn":"Operations - C","status":"Active","children":[{"id":"AFI130","name":"Amar","desig":"Telecaller MARS","fn":"Field Support","status":"Active","children":[]},{"id":"AFI127","name":"Ashwini Salgar","desig":"Telecaller MARS","fn":"Telecaller","status":"Active","children":[]},{"id":"AF845","name":"Shruti Thakur","desig":"Program Associate","fn":"Operations - C","status":"Active","children":[]},{"id":"AF656","name":"Shweta Kalyani","desig":"Program Associate","fn":"Operations - C","status":"Active","children":[]},{"id":"TBH119","name":"TBH - APM - Alumni (SAP)","desig":"","fn":"","status":"TBH","children":[]},{"id":"TBH133","name":"TBH - Sr. Manager JP Morgan","desig":"","fn":"","status":"TBH","children":[{"id":"TBH026","name":"TBH - College Partnership Coordinator 4","desig":"","fn":"","status":"Active","children":[]},{"id":"TBH027","name":"TBH - College Partnership Coordinator 5","desig":"","fn":"","status":"Active","children":[]}]},{"id":"AF209","name":"Venugobal M","desig":"Junior Program Associate","fn":"Operations - C","status":"Active","children":[]}]},{"id":"AF252","name":"Ram Gopal","desig":"Senior Program Manager","fn":"Operations - C","status":"Active","children":[{"id":"AF744","name":"Chinmayi","desig":"Senior Program Associate","fn":"Operations - C","status":"Active","children":[]},{"id":"AF290","name":"Katikala Alekhya","desig":"Senior Program Associate","fn":"Operations - C","status":"Active","children":[]},{"id":"AF279","name":"Manjula S","desig":"Senior Program Associate","fn":"Operations - C","status":"Active","children":[]},{"id":"AF768","name":"Pankajini Acharya","desig":"Junior Program Associate","fn":"Operations - C","status":"Active","children":[]}]},{"id":"AF219","name":"Siva Dasari","desig":"Associate Program Head","fn":"Operations - A","status":"Active","children":[{"id":"AF341","name":"Agnyvel Maharajan Agnymuthu","desig":"Program Manager","fn":"Operations","status":"Active","children":[{"id":"AF235","name":"M Swarna Girija","desig":"Associate Program Manager","fn":"Operations","status":"Active","children":[]},{"id":"AF462","name":"Rupesh Naik","desig":"Program Manager","fn":"Operations","status":"Active","children":[]},{"id":"AF732","name":"Samanvith A","desig":"Associate Program Manager","fn":"Operations","status":"Active","children":[]},{"id":"TBH141","name":"TBH - APM TBH 3","desig":"APM TBH 3","fn":"Operations","status":"TBH","children":[]}]},{"id":"AF702","name":"Aryaman Baruah","desig":"Associate Program Manager","fn":"Operations","status":"Active","children":[{"id":"AF849","name":"Thejangunuo Keretsu","desig":"Program Associate","fn":"Operations - A","status":"Active","children":[]}]},{"id":"TBH135","name":"TBH - SPM TBH 2","desig":"SPM TBH 2","fn":"Operations","status":"TBH","children":[{"id":"TBH142","name":"TBH - APM TBH 4","desig":"APM TBH 4","fn":"Operations","status":"TBH","children":[{"id":"AF330","name":"Shivangi Goyal","desig":"Teacher (Biology)","fn":"Teaching","status":"Active","children":[]}]},{"id":"TBH143","name":"TBH - APM TBH 5","desig":"APM TBH 5","fn":"Operations","status":"TBH","children":[]}]}]},{"id":"AF183","name":"Subramanya","desig":"Senior Program Head Operations","fn":"Operations - A","status":"Active","children":[{"id":"AF355","name":"Anand Joshi","desig":"Program Manager","fn":"Operations","status":"Active","children":[{"id":"AF869","name":"Nikita Kshatriya","desig":"Associate Program Manager","fn":"Operations","status":"Active","children":[]},{"id":"AF860","name":"Rima Chowdhury","desig":"Associate Program Manager","fn":"Operations","status":"Active","children":[]}]},{"id":"AF806","name":"Jesiel Domnic Kiny","desig":"Senior Program Manager","fn":"Operations","status":"Active","children":[{"id":"AF798","name":"Atish Anand Patil","desig":"Program Manager","fn":"Operations","status":"Active","children":[]},{"id":"TBH138","name":"TBH - PM TBH 3","desig":"PM TBH 3","fn":"Operations","status":"TBH","children":[]}]},{"id":"TBH134","name":"TBH - SPM TBH 1","desig":"SPM TBH 1","fn":"Operations","status":"TBH","children":[{"id":"TBH139","name":"TBH - APM TBH 1","desig":"APM TBH 1","fn":"Operations","status":"TBH","children":[]},{"id":"TBH140","name":"TBH - APM TBH 2","desig":"APM TBH 2","fn":"Operations","status":"TBH","children":[]}]}]}]},{"id":"AF144","name":"Panchali Dutta","desig":"Vice President Government Partnerships","fn":"Operations - A","status":"Active","children":[{"id":"AF156","name":"Juned Khan","desig":"Head- Field Operations & Outreach","fn":"Operations - A","status":"Active","children":[{"id":"AF546","name":"Akansha Mishra","desig":"Program Associate","fn":"Operations - A","status":"Active","children":[]},{"id":"AF481","name":"Anshu Sharma","desig":"Junior Program Associate","fn":"Operations - A","status":"Active","children":[]},{"id":"AF457","name":"Faizan Ahmad","desig":"Senior Program Associate","fn":"Operations - A","status":"Active","children":[]},{"id":"AF446","name":"Lokesh Chauhan","desig":"Senior Program Associate","fn":"Operations - A","status":"Active","children":[]},{"id":"AFI124","name":"Manpreet Kaur","desig":"Program Intern","fn":"Field Support","status":"Active","children":[]},{"id":"AF475","name":"Mohammed Mushahid H Nadaf","desig":"Senior Program Associate","fn":"Operations - B","status":"Active","children":[]},{"id":"AF310","name":"Mohit Kumar","desig":"Senior Program Associate","fn":"Operations - A","status":"Active","children":[]},{"id":"AF262","name":"Naveen Kumar","desig":"Junior Program Associate","fn":"Operations - A","status":"Active","children":[]},{"id":"AF578","name":"Neha Kashyap","desig":"Program Associate","fn":"Operations - A","status":"Active","children":[]},{"id":"AF472","name":"Ram Singh","desig":"Senior Program Associate","fn":"Operations - A","status":"Active","children":[]},{"id":"AF499","name":"Rameez Akhter","desig":"Operations Manager Academic","fn":"Operations - A","status":"Active","children":[{"id":"AFI125","name":"Deepa Yadav","desig":"Senior Telecaller","fn":"Telecaller","status":"Active","children":[]},{"id":"AFI126","name":"Kiran Sehrawat","desig":"Telecaller","fn":"Telecaller","status":"Active","children":[]},{"id":"AF680","name":"Ritu Mishra","desig":"Senior Telecaller","fn":"Telecaller","status":"Active","children":[]},{"id":"AF681","name":"Lalita Tiwari","desig":"Senior Telecaller","fn":"Telecaller","status":"Active","children":[]},{"id":"AF683","name":"Ravi Yadav","desig":"Senior Telecaller","fn":"Telecaller","status":"Active","children":[]}]}]},{"id":"AF245","name":"Lokesh Khandelwal","desig":"Senior Subject Matter Expert","fn":"Operations - B","status":"Active","children":[{"id":"AF308","name":"Pankaj Kumar","desig":"Senior Program Associate","fn":"Operations - A","status":"Active","children":[]}]},{"id":"AF882","name":"Savin Khandelwal","desig":"Product Head","fn":"Org","status":"Active","children":[{"id":"AF306","name":"Abhimanyu","desig":"Senior Associate - Research","fn":"Org","status":"Active","children":[]},{"id":"AF295","name":"Arushi Kapoor","desig":"Senior Product Manager","fn":"Org","status":"Active","children":[]},{"id":"AF192","name":"Hemant Modi","desig":"Senior Manager - Research","fn":"Org","status":"Active","children":[]},{"id":"AF454","name":"Himanshu Mahendra Mahadik","desig":"Senior Teacher Associate","fn":"Org","status":"Active","children":[]},{"id":"AF365","name":"Shivangi Trivedi","desig":"Program Manager","fn":"Operations - A","status":"Active","children":[]}]},{"id":"MANVI","name":"Manvi","desig":"Director - Girls in STEM","fn":"Operations - A","status":"Active","children":[{"id":"AF762","name":"Ananya Upadhyay","desig":"Product Head","fn":"Operations - A","status":"Active","children":[{"id":"AF243","name":"Monika","desig":"Senior Subject Matter Expert (Curriculum & Government Relations)","fn":"Content Creator","status":"Active","children":[]},{"id":"AF309","name":"Nida Hashmi","desig":"Senior Product Associate","fn":"Content Creator","status":"Active","children":[]},{"id":"AF255","name":"Sahana S","desig":"Senior Product Associate","fn":"Program Team","status":"Active","children":[{"id":"AF650","name":"Anjali B O","desig":"Junior Program Associate","fn":"Program Team","status":"Active","children":[]},{"id":"AF646","name":"Deepa K K","desig":"Junior Program Associate","fn":"Program Team","status":"Active","children":[]},{"id":"AF647","name":"Madhura P D","desig":"Program Associate(Foundation)","fn":"Program Team","status":"Active","children":[]}]},{"id":"TBH028","name":"TBH - GIS Product Manager (SAP)","desig":"","fn":"","status":"Active","children":[]}]}]},{"id":"TBH145","name":"TBH - Director, Girls in STEM","desig":"Director - Girls in STEM","fn":"Operations - A","status":"TBH","children":[]}]},{"id":"AF654","name":"Saumya Sahu","desig":"Executive Assistant","fn":"Org","status":"Active","children":[]},{"id":"AF263","name":"Snehal Pathak","desig":"Associate Director - Human Resources","fn":"Org","status":"Active","children":[{"id":"AF316","name":"Sonam Nagar","desig":"Senior Manager - Human Resources","fn":"Org","status":"Active","children":[{"id":"AF855","name":"Bhakti Parashar","desig":"HR Manager","fn":"Org","status":"Active","children":[]},{"id":"AF614","name":"Nazneen Irfat","desig":"Associate  - Office Administration","fn":"Org","status":"Active","children":[{"id":"AFI122","name":"Rakesh Negi","desig":"Office Helper","fn":"Field Support","status":"Active","children":[]}]},{"id":"AF778","name":"Reetika Mittal","desig":"Recruitment Associate","fn":"Org","status":"Active","children":[{"id":"AF892","name":"Ayushi Jaiswal","desig":"Junior Recruitment Associate","fn":"Org","status":"Active","children":[]},{"id":"AF809","name":"Mandeep Grewal","desig":"Junior Associate - Recruitment","fn":"Org","status":"Active","children":[]},{"id":"AF810","name":"Pooja Bhandari","desig":"Junior Associate - Recruitment","fn":"Org","status":"Active","children":[{"id":"AFI128","name":"Kashish Paul","desig":"Program Intern","fn":"Field Support","status":"Active","children":[]},{"id":"AFI132","name":"Shikha Singh","desig":"Program Intern","fn":"Org","status":"Active","children":[]}]},{"id":"AFI121","name":"Shivangi Singh","desig":"HR Intern","fn":"Org","status":"Active","children":[]}]},{"id":"AF675","name":"Shakilur Rahman","desig":"Senior Executive Accounts","fn":"Org","status":"Active","children":[]},{"id":"AF653","name":"Shraddha Singh","desig":"Manager - Human Resources","fn":"Org","status":"Active","children":[{"id":"AF686","name":"Neelam Sharma","desig":"Junior Associate - HR Operations","fn":"Org","status":"Active","children":[]}]}]},{"id":"AF886","name":"Suvigya Sharma","desig":"Senior HR Manager","fn":"Org","status":"Active","children":[]}]},{"id":"AF104","name":"Vishal S","desig":"Associate Director - Product","fn":"Product Manager","status":"Active","children":[{"id":"AF240","name":"Prabhakar Kumar","desig":"Production Manager","fn":"Production","status":"Active","children":[{"id":"AF575","name":"Amit Gurav","desig":"Production Associate, Video","fn":"Production","status":"Active","children":[]},{"id":"AF283","name":"Bhavika Daima","desig":"Production Associate - Print","fn":"Production","status":"Active","children":[]},{"id":"AFI123","name":"Dipak Kumar","desig":"Program Intern- Typist","fn":"Field Support","status":"Active","children":[]},{"id":"AFI106","name":"Mahesh Muthe","desig":"Program Intern- Typist","fn":"Field Support","status":"Active","children":[]},{"id":"AF285","name":"Manda B Walunj","desig":"Production Associate - Print","fn":"Production","status":"Active","children":[]},{"id":"AFI131","name":"Mithlesh Kumar","desig":"Program Intern- DTP Operator","fn":"Field Support","status":"Active","children":[]},{"id":"AF282","name":"Nikita Shankar Rane","desig":"Senior Print Production Specialist","fn":"Production","status":"Active","children":[]},{"id":"AFI112","name":"Om Prakash","desig":"Program Intern -Typist","fn":"Production","status":"Active","children":[]},{"id":"AFI085","name":"Rahul","desig":"Program Intern","fn":"Production","status":"Active","children":[]},{"id":"AFI108","name":"Raushan Kumar","desig":"DTP Operator","fn":"Production","status":"Active","children":[]},{"id":"AF284","name":"Varsha Nale","desig":"Production Associate - Print","fn":"Production","status":"Active","children":[]}]},{"id":"AF267","name":"Rahul Chauhan","desig":"Head Product Development - Test Prep","fn":"Product Manager","status":"Active","children":[{"id":"AF354","name":"Nitin Sati","desig":"Manager - Product","fn":"Product Manager","status":"Active","children":[]}]},{"id":"AF087","name":"Trivendu Biswal","desig":"Academic head","fn":"Product Manager","status":"Active","children":[{"id":"AF611","name":"Abhishek Prakash","desig":"Curriculum Research Specialist","fn":"Content Creator","status":"Active","children":[]},{"id":"AF450","name":"Akib Khan","desig":"Curriculum Research Specialist,","fn":"Content Creator","status":"Active","children":[]},{"id":"AF658","name":"Gaurav Tiwari","desig":"Curriculum Research Specialist","fn":"Content Creator","status":"Active","children":[]},{"id":"AF626","name":"Pawan Gauswami","desig":"Curriculum Research Specialist","fn":"Content Creator","status":"Active","children":[]},{"id":"AF871","name":"Revti Raman Sharma","desig":"Curriculum Research Specialist","fn":"Content Creator","status":"Active","children":[]},{"id":"AF411","name":"Sarvasuddhi Govindakalyani","desig":"Curriculum Research Specialist","fn":"Content Creator","status":"Active","children":[]},{"id":"AF516","name":"Saurabh Gorankar","desig":"Product Associate","fn":"Content Creator","status":"Active","children":[]},{"id":"AF418","name":"Vaishali Thapa","desig":"Senior Product Associate","fn":"Content Creator","status":"Active","children":[]},{"id":"AF852","name":"Yogendra Singh Beniwal","desig":"Product Associate","fn":"Content Creator","status":"Active","children":[]}]},{"id":"AF168","name":"Vinay Bondada","desig":"Senior Product Manager (Teacher Training and Development)","fn":"Product Manager","status":"Active","children":[{"id":"AF749","name":"Debatri Talukdar","desig":"Product Manager (Teacher Training and Development)","fn":"Product Manager","status":"Active","children":[]},{"id":"AF620","name":"Satpal Kaushik","desig":"Teacher Trainer","fn":"Product Manager","status":"Active","children":[]},{"id":"AF483","name":"Vinay Anand","desig":"Teacher Trainer (Biology),","fn":"Product Manager","status":"Active","children":[]}]}]}]},"nt_no_rm":[{"id":"AF676","name":"Amar Nagpal","desig":"Teacher (Physics)","fn":"Teaching","status":"Active","children":[]},{"id":"AF838","name":"Abhishek Kumar","desig":"Junior Program Associate","fn":"Operations - A","status":"Active","children":[]},{"id":"AF850","name":"Chandrasekhar Vytla","desig":"Academic Project Coordinator","fn":"Operations - A","status":"Active","children":[]},{"id":"AF883","name":"Devendra Singh Chandrawat","desig":"Teacher (Chemistry)","fn":"Teaching","status":"Active","children":[]},{"id":"AFI024","name":"Khushboo Pandey","desig":"Telecaller","fn":"Telecaller","status":"Active","children":[]},{"id":"AFI032","name":"Hema Shankerlal Pandya","desig":"Senior Telecaller","fn":"Telecaller","status":"Active","children":[]},{"id":"AFI088","name":"Satish","desig":"Telecaller- Delhi","fn":"Telecaller","status":"Active","children":[]},{"id":"TBH076","name":"TBH - Telecalling Manager","desig":"","fn":"","status":"Active","children":[]},{"id":"AF679","name":"Subhas M","desig":"Program Associate","fn":"Operations - A","status":"Active","children":[]}],"nt_orphaned":[],"nt_exits":[{"id":"AF349","name":"Ajay Kumar Dasari","desig":"Program Manager","fn":"Operations - A","status":"Exit","children":[]},{"id":"AF567","name":"Aman Jakar","desig":"Head Operations - South","fn":"Operations - A","status":"Exit","children":[]},{"id":"AFI119","name":"Preetham Gowda V A","desig":"Program Intern","fn":"Field Support","status":"Exit","children":[]},{"id":"AF878","name":"Toshiba Chaurasia","desig":"Senior Program Associate","fn":"Operations - B","status":"Exit","children":[]},{"id":"AF873","name":"Nitin K R","desig":"Senior Program Associate","fn":"Operations - A","status":"Exit","children":[]},{"id":"AF370","name":"Gurvir Singh","desig":"Operations Manager","fn":"Operations","status":"Exit","children":[]},{"id":"AF609","name":"Ghazala Firdos","desig":"Teaching","fn":"Teaching","status":"Exit","children":[]},{"id":"AF217","name":"Vinod Mehto","desig":"Senior Program Manager","fn":"Operations - A","status":"Exit","children":[]},{"id":"AF872","name":"Atul Kumar Jha","desig":"Teaching","fn":"Teaching","status":"Exit","children":[]},{"id":"AF839","name":"Kiran Kumar Samanta","desig":"Teaching","fn":"Teaching","status":"Exit","children":[]},{"id":"AF674","name":"Pulak Maity","desig":"Teaching","fn":"Teaching","status":"Exit","children":[]},{"id":"AF833","name":"Gaurav Kumar","desig":"Teaching","fn":"Teaching","status":"Exit","children":[]},{"id":"AF491","name":"Bhagyashree Harasur","desig":"Teaching","fn":"Teaching","status":"Exit","children":[]},{"id":"AF856","name":"Adarsh Pal","desig":"Teaching","fn":"Teaching","status":"Exit","children":[]},{"id":"AF802","name":"Suguna Sri Vagvala","desig":"Teaching","fn":"Teaching","status":"Exit","children":[]},{"id":"AF841","name":"Md. Nisar Mollick","desig":"Teaching","fn":"Teaching","status":"Exit","children":[]},{"id":"AF826","name":"Akash Singh","desig":"Teaching","fn":"Teaching","status":"Exit","children":[]},{"id":"AF796","name":"Raj Kumar","desig":"Teaching","fn":"Teaching","status":"Exit","children":[]},{"id":"AFI118","name":"Preethi Selvaraj","desig":"Program Intern- Typist","fn":"Field Support","status":"Exit","children":[]},{"id":"AFI129","name":"Shweta Shastri","desig":"Telecaller MARS","fn":"Field Support","status":"Exit","children":[]}],"teaching_mgmt":{"id":"AF100","name":"Agny Ganesh","desig":"Senior Director Operation","status":"Active","role":"mgmt","children":[{"id":"AF219","name":"Siva Dasari","desig":"Associate Program Head","status":"Active","role":"mgmt","children":[{"id":"AF341","name":"Agnyvel Maharajan Agnymuthu","desig":"Senior Program Manager","status":"Active","role":"mgmt","spm_data":{"id":"AF341","name":"Agnyvel Maharajan Agnymuthu","role":"SPM","pms":[{"id":"AF462","name":"Rupesh Naik","role":"PM","apms":[{"id":"","name":"Unassigned","role":"APM","centres":[{"name":"EMRS Tumkur","prog":"JEE + NEET","state":"Karnataka","cat":"Cat 2 CoE","enrol":"Not Found","apm":"","apm_id":"","pm":"Rupesh Naik","pm_id":"AF462","spm":"Agnyvel Maharajan Agnymuthu","spm_id":"AF341","teachers":[{"subj":"B","name":"Sanjay Kumar R","id":"AF257","level":"MBBS"},{"subj":"C","name":"TBH","id":"","level":"TBH"},{"subj":"M","name":"TBH","id":"","level":"TBH"},{"subj":"P","name":"TBH","id":"","level":"TBH"}]},{"name":"JNV Bangalore South","prog":"JEE","state":"Karnataka","cat":"Cat 1 CoE","enrol":"Not Found","apm":"","apm_id":"","pm":"Rupesh Naik","pm_id":"AF462","spm":"Agnyvel Maharajan Agnymuthu","spm_id":"AF341","teachers":[{"subj":"APC","name":"TBH","id":"","level":"TBH"},{"subj":"C","name":"Roshith P","id":"AF340","level":"JEE Mains Plus"},{"subj":"M","name":"TBH","id":"","level":"TBH"},{"subj":"P","name":"TBH","id":"","level":"TBH"}]},{"name":"JNV Puducherry","prog":"JEE","state":"Puducherry (UT)","cat":"Cat 1 CoE","enrol":"Not Found","apm":"","apm_id":"","pm":"Rupesh Naik","pm_id":"AF462","spm":"Agnyvel Maharajan Agnymuthu","spm_id":"AF341","teachers":[{"subj":"APC","name":"TBH","id":"","level":"TBH"},{"subj":"C","name":"Rubini","id":"AF667","level":"Unknown"},{"subj":"M","name":"Sagar Setu","id":"AF594","level":"JEE Mains Plus"},{"subj":"P","name":"TBH","id":"","level":"TBH"}]}]}]},{"id":"","name":"Unassigned","role":"PM","apms":[{"id":"AF235","name":"M Swarna Girija","role":"APM","centres":[{"name":"JNV Bellary","prog":"JEE","state":"Karnataka","cat":"Cat 2 CoE","enrol":"Not Found","apm":"M Swarna Girija","apm_id":"AF235","pm":"","pm_id":"","spm":"Agnyvel Maharajan Agnymuthu","spm_id":"AF341","teachers":[{"subj":"C","name":"Pratap Kumar","id":"","level":"JEE Main"},{"subj":"M","name":"Shailesh Yadav","id":"AF897","level":"JEE Main"},{"subj":"P","name":"TBH","id":"","level":"TBH"}]},{"name":"JNV Hassan","prog":"JEE","state":"Karnataka","cat":"Cat 2 CoE","enrol":"Not Found","apm":"M Swarna Girija","apm_id":"AF235","pm":"","pm_id":"","spm":"Agnyvel Maharajan Agnymuthu","spm_id":"AF341","teachers":[{"subj":"APC","name":"TBH","id":"","level":"TBH"},{"subj":"C","name":"Nirmal P Antony","id":"AF364","level":"JEE Main"},{"subj":"M","name":"Rahul modi","id":"AF876","level":"Unknown"},{"subj":"P","name":"Digamber Butola","id":"AF895","level":"JEE Advanced"}]},{"name":"JNV South Canara","prog":"JEE + NEET","state":"Karnataka","cat":"Cat 1 CoE","enrol":"Not Found","apm":"M Swarna Girija","apm_id":"AF235","pm":"","pm_id":"","spm":"Agnyvel Maharajan Agnymuthu","spm_id":"AF341","teachers":[{"subj":"B","name":"Arpitha A G","id":"AF321","level":"MBBS"},{"subj":"C","name":"Hareeshma K","id":"AF730","level":"MBBS"},{"subj":"M","name":"Ankit Kamboj","id":"AF736","level":"JEE Mains Plus"},{"subj":"P","name":"Suneesh k","id":"AF520","level":"MBBS"}]}]},{"id":"AF732","name":"Samanvith A","role":"APM","centres":[{"name":"JNV Chamarajanagar","prog":"JEE + NEET","state":"Karnataka","cat":"Nodal","enrol":"Not Found","apm":"Samanvith A","apm_id":"AF732","pm":"","pm_id":"","spm":"Agnyvel Maharajan Agnymuthu","spm_id":"AF341","teachers":[{"subj":"B","name":"Srusti B M","id":"AF371","level":"MBBS"},{"subj":"C","name":"Priyanka Dey","id":"AF825","level":"CET"},{"subj":"M","name":"Divya Auradi","id":"AF824","level":"CET"},{"subj":"P","name":"Prittam Nayak","id":"AF728","level":"CET"}]},{"name":"JNV Mandya","prog":"JEE + NEET","state":"Karnataka","cat":"Nodal","enrol":"Not Found","apm":"Samanvith A","apm_id":"AF732","pm":"","pm_id":"","spm":"Agnyvel Maharajan Agnymuthu","spm_id":"AF341","teachers":[{"subj":"B","name":"Nrutya Koppalaramane","id":"AF859","level":"NEET"},{"subj":"C","name":"Golam Hossain Ali","id":"AF699","level":"CET"},{"subj":"M","name":"Amruthavarshini KY","id":"AF523","level":"CET"},{"subj":"P","name":"Sk Afroz Alam Quadri","id":"AF819","level":"CET"}]},{"name":"JNV Udupi","prog":"JEE + NEET","state":"Karnataka","cat":"Nodal","enrol":"Not Found","apm":"Samanvith A","apm_id":"AF732","pm":"","pm_id":"","spm":"Agnyvel Maharajan Agnymuthu","spm_id":"AF341","teachers":[{"subj":"B","name":"TBH","id":"","level":"TBH"},{"subj":"C","name":"Aanjaneya","id":"AF816","level":"CET"},{"subj":"M","name":"Venkateswarlu Banoth","id":"AF413","level":"CET"},{"subj":"P","name":"Piyush Yadav","id":"AF777","level":"CET"}]}]},{"id":"TBH141","name":"APM TBH 3","role":"APM","centres":[{"name":"JNV Kottayam","prog":"JEE","state":"Kerala","cat":"Cat 1 CoE","enrol":"Not Found","apm":"APM TBH 3","apm_id":"","pm":"","pm_id":"","spm":"Agnyvel Maharajan Agnymuthu","spm_id":"AF341","teachers":[{"subj":"APC","name":"Thomas Chacko","id":"AF794","level":"Unknown"},{"subj":"C","name":"Brilliant","id":"","level":"JEE Advanced"},{"subj":"M","name":"Brilliant","id":"","level":"JEE Advanced"},{"subj":"P","name":"Brilliant","id":"","level":"JEE Advanced"}]},{"name":"JNV Thiruvananthapuram","prog":"JEE","state":"Kerala","cat":"Cat 2 CoE","enrol":"Not Found","apm":"APM TBH 3","apm_id":"","pm":"","pm_id":"","spm":"Agnyvel Maharajan Agnymuthu","spm_id":"AF341","teachers":[{"subj":"APC","name":"Gouri P","id":"AF403","level":"CET"},{"subj":"C","name":"Brilliant","id":"","level":"JEE Advanced"},{"subj":"M","name":"Brilliant","id":"","level":"JEE Advanced"},{"subj":"P","name":"Brilliant","id":"","level":"JEE Advanced"}]}]}]}]},"children":[]},{"id":"TBH135","name":"SPM TBH 2","desig":"Senior Program Manager (SPM TBH 2)","status":"TBH","role":"mgmt","spm_data":{"id":"TBH135","name":"SPM TBH 2","role":"SPM","pms":[{"id":"","name":"Unassigned","role":"PM","apms":[{"id":"TBH142","name":"APM TBH 4","role":"APM","centres":[{"name":"JNV Adilabad (CoE)","prog":"JEE","state":"Telangana","cat":"Cat 1 CoE","enrol":"Not Found","apm":"APM TBH 4","apm_id":"","pm":"","pm_id":"","spm":"SPM TBH 2","spm_id":"","teachers":[{"subj":"APC","name":"Riya Kumari","id":"AF822","level":"CET"},{"subj":"C","name":"TBH","id":"","level":"TBH"},{"subj":"M","name":"Harun Rashid","id":"AF877","level":"JEE Main"},{"subj":"P","name":"Yogesh Singh","id":"AF638","level":"JEE Mains Plus"}]},{"name":"JNV Adilabad (Nodal)","prog":"JEE + NEET","state":"Telangana","cat":"Nodal","enrol":"Not Found","apm":"APM TBH 4","apm_id":"","pm":"","pm_id":"","spm":"SPM TBH 2","spm_id":"","teachers":[{"subj":"B","name":"K Roza","id":"AF726","level":"MBBS"},{"subj":"C","name":"Janagama Adithya","id":"AF604","level":"CET"},{"subj":"M","name":"Tofan Sitha","id":"AF771","level":"CET"},{"subj":"P","name":"Kevin Thomas","id":"AF817","level":"CET"}]},{"name":"JNV Karimnagar","prog":"NEET","state":"Telangana","cat":"Cat 2 CoE","enrol":"Not Found","apm":"APM TBH 4","apm_id":"","pm":"","pm_id":"","spm":"SPM TBH 2","spm_id":"","teachers":[{"subj":"B","name":"TBH","id":"","level":"TBH"},{"subj":"C","name":"Priyanka Mittal","id":"AF504","level":"JEE Main"},{"subj":"M","name":"Abhishek Rauniyar","id":"","level":"JEE Main"},{"subj":"P","name":"Abhishek Pachauri","id":"","level":"JEE Advanced"}]},{"name":"JNV Medak","prog":"JEE","state":"Telangana","cat":"Cat 1 CoE","enrol":"Not Found","apm":"APM TBH 4","apm_id":"","pm":"","pm_id":"","spm":"SPM TBH 2","spm_id":"","teachers":[{"subj":"APC","name":"Daneshwari  Kolalagi","id":"","level":"CET"},{"subj":"B","name":"Shivangi Goyal","id":"AF330","level":"MBBS"},{"subj":"C","name":"SRL","id":"","level":"Unknown"},{"subj":"P","name":"Keshav Verma","id":"AF887","level":"JEE Main"}]}]},{"id":"TBH143","name":"APM TBH 5","role":"APM","centres":[{"name":"JNV Kurnool","prog":"JEE","state":"Andhra Pradesh","cat":"Cat 1 CoE","enrol":"Not Found","apm":"APM TBH 5","apm_id":"","pm":"","pm_id":"","spm":"SPM TBH 2","spm_id":"","teachers":[{"subj":"APC","name":"TBH","id":"","level":"TBH"},{"subj":"C","name":"Indrani Khan","id":"AF888","level":"JEE Main"},{"subj":"M","name":"TBH","id":"","level":"TBH"},{"subj":"P","name":"TBH","id":"","level":"TBH"}]},{"name":"JNV Nellore","prog":"JEE","state":"Andhra Pradesh","cat":"Cat 2 CoE","enrol":"Not Found","apm":"APM TBH 5","apm_id":"","pm":"","pm_id":"","spm":"SPM TBH 2","spm_id":"","teachers":[{"subj":"APC","name":"TBH","id":"","level":"TBH"},{"subj":"C","name":"Bonthu Tavitinaidu","id":"AF573","level":"JEE Mains Plus"},{"subj":"M","name":"Antari Patra","id":"AF846","level":"JEE Main"},{"subj":"P","name":"Bishal","id":"","level":"JEE Main"}]}]}]}]},"children":[]},{"id":"AF702","name":"Aryaman Baruah","desig":"Academic Program Manager","status":"Active","role":"mgmt","spm_data":{"id":"AF702","name":"Aryaman Baruah","role":"SPM","pms":[{"id":"","name":"Unassigned","role":"PM","apms":[{"id":"AF702","name":"Aryaman Baruah","role":"APM","centres":[{"name":"JNV Kohima","prog":"JEE + NEET","state":"Nagaland","cat":"Cat 2 CoE","enrol":"Not Found","apm":"Aryaman Baruah","apm_id":"AF702","pm":"","pm_id":"","spm":"","spm_id":"","teachers":[{"subj":"APC","name":"TBH","id":"","level":"TBH"},{"subj":"B","name":"TBH","id":"","level":"TBH"},{"subj":"C","name":"Shubham Sharma","id":"AF898","level":"JEE Main"},{"subj":"M","name":"Suresh Baitha","id":"AF717","level":"CET"},{"subj":"P","name":"TBH","id":"","level":"TBH"}]},{"name":"JNV Kokrajhar","prog":"JEE + NEET","state":"Assam","cat":"Cat 1 CoE","enrol":"Not Found","apm":"Aryaman Baruah","apm_id":"AF702","pm":"","pm_id":"","spm":"","spm_id":"","teachers":[{"subj":"APC","name":"TBH","id":"","level":"TBH"},{"subj":"B","name":"Nisha Maurya","id":"AF474","level":"MBBS"},{"subj":"C","name":"TBH","id":"","level":"TBH"},{"subj":"M","name":"Khurshid Ahmad","id":"AF640","level":"JEE Main"},{"subj":"P","name":"Manish Sharma","id":"AF384","level":"JEE Advanced"}]},{"name":"Nagaland Foundation","prog":"Math","state":"Nagaland Foundation-Math-Shillong-Coaching center","cat":"Foundation","enrol":"Not Found","apm":"Aryaman Baruah","apm_id":"AF702","pm":"","pm_id":"","spm":"","spm_id":"","teachers":[{"subj":"M","name":"Kevi","id":"","level":"Foundation"},{"subj":"M","name":"Renyo","id":"","level":"Foundation"}]}]}]}]},"children":[]}]},{"id":"AF183","name":"Subramanya","desig":"Associate Program Head","status":"Active","role":"mgmt","children":[{"id":"TBH134","name":"SPM TBH 1","desig":"Senior Program Manager (SPM TBH 1)","status":"TBH","role":"mgmt","spm_data":{"id":"TBH134","name":"SPM TBH 1","role":"SPM","pms":[{"id":"","name":"Unassigned","role":"PM","apms":[{"id":"TBH139","name":"APM TBH 1","role":"APM","centres":[{"name":"EMRS Bhopal","prog":"JEE + NEET","state":"Madhya Pradesh","cat":"Cat 2 CoE","enrol":"Not Found","apm":"APM TBH 1","apm_id":"","pm":"","pm_id":"","spm":"SPM TBH 1","spm_id":"","teachers":[{"subj":"APC","name":"TBH","id":"","level":"TBH"},{"subj":"B","name":"Ritika Waghmare","id":"AF874","level":"MBBS"},{"subj":"C","name":"Darshil Jain","id":"AF840","level":"JEE Mains Plus"},{"subj":"C","name":"Barsharani Khatua","id":"AF586","level":"CET"},{"subj":"M","name":"Sunil Parmar","id":"AF834","level":"JEE Main"},{"subj":"P","name":"Shivam Gupta","id":"AF529","level":"JEE Mains Plus"}]},{"name":"JNV Barwani","prog":"JEE","state":"Madhya Pradesh","cat":"Cat 1 CoE","enrol":"Not Found","apm":"APM TBH 1","apm_id":"","pm":"","pm_id":"","spm":"SPM TBH 1","spm_id":"","teachers":[{"subj":"APC","name":"Yogita Yadav","id":"","level":"CET"},{"subj":"C","name":"Sandeep Maurya","id":"","level":"JEE Advanced"},{"subj":"M","name":"Dayanand Kumar","id":"AF853","level":"JEE Mains Plus"},{"subj":"P","name":"Vivek Bansal","id":"AF248","level":"JEE Advanced"}]},{"name":"JNV Ujjain 2","prog":"JEE","state":"Madhya Pradesh","cat":"Cat 1 CoE","enrol":"Not Found","apm":"APM TBH 1","apm_id":"","pm":"","pm_id":"","spm":"SPM TBH 1","spm_id":"","teachers":[{"subj":"C","name":"Sandeep Dixit","id":"AF464","level":"JEE Advanced"},{"subj":"M","name":"Vikas","id":"","level":"JEE Advanced"},{"subj":"P","name":"Amar nagpal","id":"AF676","level":"Unknown"}]}]},{"id":"TBH140","name":"APM TBH 2","role":"APM","centres":[{"name":"JNV Cuttack","prog":"JEE","state":"Odisha","cat":"Cat 1 CoE","enrol":"Not Found","apm":"APM TBH 2","apm_id":"","pm":"","pm_id":"","spm":"SPM TBH 1","spm_id":"","teachers":[{"subj":"APC","name":"Sharda Kumari","id":"","level":"CET"},{"subj":"C","name":"TBH","id":"","level":"TBH"},{"subj":"M","name":"Rajnish Pathak","id":"AF893","level":"JEE Advanced"},{"subj":"P","name":"Ekanta Sahu","id":"AF459","level":"JEE Mains Plus"}]},{"name":"JNV Puri","prog":"JEE","state":"Odisha","cat":"Cat 1 CoE","enrol":"Not Found","apm":"APM TBH 2","apm_id":"","pm":"","pm_id":"","spm":"SPM TBH 1","spm_id":"","teachers":[{"subj":"C","name":"Lacchu Naik","id":"AF127","level":"JEE Mains Plus"},{"subj":"M","name":"TBH","id":"","level":"TBH"},{"subj":"P","name":"TBH","id":"","level":"TBH"}]}]}]}]},"children":[]},{"id":"AF355","name":"Anand Joshi","desig":"Senior Program Manager","status":"Active","role":"mgmt","spm_data":{"id":"AF355","name":"Anand Joshi","role":"SPM","pms":[{"id":"","name":"Unassigned","role":"PM","apms":[{"id":"AF869","name":"Nikita Kshatriya","role":"APM","centres":[{"name":"JNV Bharuch","prog":"JEE + NEET","state":"Gujarat","cat":"Nodal","enrol":"Not Found","apm":"Nikita Kshatriya","apm_id":"AF869","pm":"","pm_id":"","spm":"Anand Joshi","spm_id":"AF355","teachers":[{"subj":"B","name":"Ranjeshkumar Sharma","id":"AF723","level":"MBBS"},{"subj":"C","name":"Madan singh","id":"AF800","level":"CET"},{"subj":"M","name":"Jyoti","id":"AF786","level":"CET"},{"subj":"P","name":"Meena Swami","id":"AF881","level":"CET"}]},{"name":"JNV Mahisagar","prog":"JEE","state":"Gujarat","cat":"Cat 1 CoE","enrol":"Not Found","apm":"Nikita Kshatriya","apm_id":"AF869","pm":"","pm_id":"","spm":"Anand Joshi","spm_id":"AF355","teachers":[{"subj":"APC","name":"Pragati","id":"","level":"CET"},{"subj":"C","name":"Archana","id":"AF635","level":"JEE Mains Plus"},{"subj":"M","name":"Monu Sahite","id":"AF842","level":"JEE Main"},{"subj":"P","name":"Ankit Kumar","id":"AF889","level":"JEE Mains Plus"}]},{"name":"JNV Nandurbar 2","prog":"JEE","state":"Maharashtra","cat":"Cat 2 CoE","enrol":"Not Found","apm":"Nikita Kshatriya","apm_id":"AF869","pm":"","pm_id":"","spm":"Anand Joshi","spm_id":"AF355","teachers":[{"subj":"C","name":"TBH","id":"","level":"TBH"},{"subj":"M","name":"Punam Yadav","id":"","level":"JEE Main"},{"subj":"P","name":"Manish Kumar","id":"AF740","level":"JEE Mains Plus"}]}]},{"id":"AF860","name":"Rima Chowdhury","role":"APM","centres":[{"name":"JNV Chandrapur","prog":"JEE + NEET","state":"Maharashtra","cat":"Cat 1 CoE","enrol":"Not Found","apm":"Rima Chowdhury","apm_id":"AF860","pm":"","pm_id":"","spm":"Anand Joshi","spm_id":"AF355","teachers":[{"subj":"APC","name":"Prerna","id":"AF875","level":"CET"},{"subj":"B","name":"Rinkesh Rajesh Kanekar","id":"AF585","level":"MBBS"},{"subj":"C","name":"Shubham Balesaheb Patil","id":"AF832","level":"JEE Advanced"},{"subj":"M","name":"Ram Nivas","id":"","level":"JEE Advanced"},{"subj":"P","name":"Ashish jain","id":"AF465","level":"JEE Mains Plus"}]},{"name":"JNV Kolhapur","prog":"JEE","state":"Maharashtra","cat":"Cat 1 CoE","enrol":"Not Found","apm":"Rima Chowdhury","apm_id":"AF860","pm":"","pm_id":"","spm":"Anand Joshi","spm_id":"AF355","teachers":[{"subj":"APC","name":"Swity","id":"","level":"CET"},{"subj":"C","name":"SRL","id":"","level":"JEE Advanced"},{"subj":"M","name":"SRL","id":"","level":"JEE Advanced"},{"subj":"P","name":"SRL","id":"","level":"JEE Advanced"}]},{"name":"JNV Palghar","prog":"JEE","state":"Maharashtra","cat":"Cat 1 CoE","enrol":"Not Found","apm":"Rima Chowdhury","apm_id":"AF860","pm":"","pm_id":"","spm":"Anand Joshi","spm_id":"AF355","teachers":[{"subj":"APC","name":"Shraddha Pawar","id":"AF880","level":"CET"},{"subj":"C","name":"Sanjeet Pal","id":"AF400","level":"JEE Mains Plus"},{"subj":"M","name":"Manjit Kumar","id":"AF836","level":"JEE Main"},{"subj":"P","name":"Saurabh Srivastava","id":"AF835","level":"JEE Mains Plus"}]},{"name":"JNV Wardha","prog":"JEE + NEET","state":"Maharashtra","cat":"Cat 2 CoE","enrol":"Not Found","apm":"Rima Chowdhury","apm_id":"AF860","pm":"","pm_id":"","spm":"Anand Joshi","spm_id":"AF355","teachers":[{"subj":"B","name":"TBH","id":"","level":"TBH"},{"subj":"C","name":"TBH","id":"","level":"TBH"},{"subj":"M","name":"Sibbu Singh","id":"","level":"JEE Main"},{"subj":"P","name":"TBH","id":"","level":"TBH"}]}]}]}]},"children":[]},{"id":"AF806","name":"Jesiel Domnic Kiny","desig":"Senior Program Manager","status":"Active","role":"mgmt","spm_data":{"id":"AF806","name":"Jesiel Domnic Kiny","role":"SPM","pms":[{"id":"AF798","name":"Atish Anand Patil","role":"PM","apms":[{"id":"","name":"Unassigned","role":"APM","centres":[{"name":"Mumbai - Andheri","prog":"JEE","state":"Maharashtra","cat":"Nodal","enrol":"Not Found","apm":"","apm_id":"","pm":"Atish Anand Patil","pm_id":"AF798","spm":"Jesiel Domnic Kiny","spm_id":"AF806","teachers":[{"subj":"C","name":"TBH","id":"","level":"TBH"},{"subj":"M","name":"Manoj Choudhary","id":"AF588","level":"CET"},{"subj":"P","name":"Yash Paswan","id":"AF828","level":"CET"}]},{"name":"Mumbai - Dadar","prog":"JEE","state":"Maharashtra","cat":"Nodal","enrol":"Not Found","apm":"","apm_id":"","pm":"Atish Anand Patil","pm_id":"AF798","spm":"Jesiel Domnic Kiny","spm_id":"AF806","teachers":[{"subj":"C","name":"TBH","id":"","level":"TBH"},{"subj":"M","name":"Shariqua Hassan","id":"AF801","level":"CET"},{"subj":"P","name":"Ankit Biloniyan","id":"AF885","level":"JEE Main"}]},{"name":"Mumbai Foundation","prog":"Math","state":"Mumbai Foundation-Math-Pune-Coaching center","cat":"Foundation","enrol":"Not Found","apm":"","apm_id":"","pm":"Atish Anand Patil","pm_id":"AF798","spm":"Jesiel Domnic Kiny","spm_id":"AF806","teachers":[{"subj":"M","name":"Shaikh Mohammed Tayyeb Ali","id":"AF879","level":"Foundation"}]}]}]},{"id":"TBH138","name":"PM TBH 3","role":"PM","apms":[{"id":"","name":"Unassigned","role":"APM","centres":[{"name":"Pune - Dapodi","prog":"JEE","state":"Maharashtra","cat":"Nodal","enrol":"Not Found","apm":"","apm_id":"","pm":"PM TBH 3","pm_id":"","spm":"Jesiel Domnic Kiny","spm_id":"AF806","teachers":[{"subj":"C","name":"TBH","id":"","level":"TBH"},{"subj":"M","name":"Nikita Shrikesh Powar","id":"AF847","level":"CET"},{"subj":"P","name":"TBH","id":"","level":"TBH"}]},{"name":"Pune - FC Road","prog":"JEE","state":"Maharashtra","cat":"Nodal","enrol":"Not Found","apm":"","apm_id":"","pm":"PM TBH 3","pm_id":"","spm":"Jesiel Domnic Kiny","spm_id":"AF806","teachers":[{"subj":"C","name":"Atul Nandkumar","id":"AF703","level":"JEE Main"},{"subj":"M","name":"Raja Ram Vishnoi","id":"AF648","level":"CET"},{"subj":"P","name":"Priyadarshini Patil","id":"AF761","level":"JEE Main"}]},{"name":"Pune Foundation","prog":"Math","state":"Pune Foundation-Math-Pune-Coaching center","cat":"Foundation","enrol":"Not Found","apm":"","apm_id":"","pm":"PM TBH 3","pm_id":"","spm":"Jesiel Domnic Kiny","spm_id":"AF806","teachers":[{"subj":"M","name":"Anuj Sharma","id":"AF851","level":"Foundation"},{"subj":"P","name":"Akash Chate","id":"AF884","level":"Foundation"}]}]}]}]},"children":[]}]},{"id":"AF693","name":"Abhishek Kumar","desig":"Associate Program Head","status":"Active","role":"mgmt","children":[{"id":"AF233","name":"Deepak Gupta","desig":"Senior Program Manager","status":"Active","role":"mgmt","spm_data":{"id":"AF233","name":"Deepak Gupta","role":"SPM","pms":[{"id":"","name":"Unassigned","role":"PM","apms":[{"id":"AF854","name":"Prashant Kumar","role":"APM","centres":[{"name":"JNV Bhagalpur","prog":"JEE + NEET","state":"Bihar","cat":"Nodal","enrol":"Not Found","apm":"Prashant Kumar","apm_id":"AF854","pm":"","pm_id":"","spm":"Deepak Gupta","spm_id":"AF233","teachers":[{"subj":"B","name":"Akash Kumar","id":"AF601","level":"MBBS"},{"subj":"C","name":"Shrimant Algud","id":"AF815","level":"CET"},{"subj":"M","name":"Aditya Kumar","id":"AF823","level":"CET"},{"subj":"P","name":"Sunil Kumar Saini","id":"AF460","level":"CET"}]},{"name":"JNV Durgapur","prog":"JEE","state":"West Bengal","cat":"Cat 1 CoE","enrol":"Not Found","apm":"Prashant Kumar","apm_id":"AF854","pm":"","pm_id":"","spm":"Deepak Gupta","spm_id":"AF233","teachers":[{"subj":"APC","name":"TBH","id":"","level":"TBH"},{"subj":"C","name":"Rajesh Sarkar","id":"AF837","level":"JEE Advanced"},{"subj":"M","name":"Rahul Kumar","id":"AF249","level":"JEE Advanced"},{"subj":"P","name":"Pratik Saha","id":"AF896","level":"JEE Mains Plus"}]},{"name":"JNV Vaishali","prog":"JEE + NEET","state":"Bihar","cat":"Cat 2 CoE","enrol":"Not Found","apm":"Prashant Kumar","apm_id":"AF854","pm":"","pm_id":"","spm":"Deepak Gupta","spm_id":"AF233","teachers":[{"subj":"B","name":"TBH","id":"","level":"TBH"},{"subj":"C","name":"Aditya Kashyap","id":"AF754","level":"JEE Mains Plus"},{"subj":"M","name":"Sandeep Kumar","id":"","level":"Unknown"},{"subj":"P","name":"Kundan Kumar","id":"TBH034","level":"JEE Main"}]}]},{"id":"AF793","name":"Md Shahnwaj Alam","role":"APM","centres":[{"name":"JNV Bundi","prog":"JEE","state":"Rajasthan","cat":"Cat 1 CoE","enrol":"Not Found","apm":"Md Shahnwaj Alam","apm_id":"AF793","pm":"","pm_id":"","spm":"Deepak Gupta","spm_id":"AF233","teachers":[{"subj":"APC","name":"Kirti Naredi","id":"","level":"CET"},{"subj":"C","name":"Md Saif Farooqui","id":"AF789","level":"JEE Advanced"},{"subj":"M","name":"Anubhav Sundaria","id":"AF790","level":"JEE Advanced"},{"subj":"P","name":"Ajay Kumar","id":"AF788","level":"JEE Advanced"}]},{"name":"JNV Lucknow","prog":"JEE","state":"Uttar Pradesh","cat":"Cat 1 CoE","enrol":"Not Found","apm":"Md Shahnwaj Alam","apm_id":"AF793","pm":"","pm_id":"","spm":"Deepak Gupta","spm_id":"AF233","teachers":[{"subj":"APC","name":"Swati","id":"","level":"CET"},{"subj":"C","name":"Devendra","id":"AF883","level":"Unknown"},{"subj":"M","name":"Arpit Singh","id":"AF709","level":"JEE Advanced"},{"subj":"P","name":"Akshay Pratap Singh","id":"AF398","level":"JEE Advanced"}]}]}]}]},"children":[]},{"id":"TBH136","name":"SPM TBH","desig":"Senior Program Manager (TBH)","status":"TBH","role":"mgmt","spm_data":{"id":"TBH136","name":"SPM TBH","role":"SPM","pms":[{"id":"","name":"Unassigned","role":"PM","apms":[{"id":"TBH144","name":"APM TBH 6","role":"APM","centres":[{"name":"Live Class - Punjab, Himachal, Uttarakhand, Delhi","prog":"","state":"North India","cat":"Cat 2 CoE","enrol":"Not Found","apm":"APM TBH 6","apm_id":"","pm":"","pm_id":"","spm":"","spm_id":"","teachers":[]}]}]},{"id":"TBH137","name":"PM TBH 1","role":"PM","apms":[{"id":"","name":"Unassigned","role":"APM","centres":[{"name":"Meritorious School Bhatinda","prog":"JEE","state":"Punjab","cat":"Cat 2 CoE","enrol":"Not Found","apm":"","apm_id":"","pm":"PM TBH 1","pm_id":"","spm":"","spm_id":"","teachers":[{"subj":"B","name":"Anmol Arora","id":"AF755","level":"MBBS"},{"subj":"C","name":"Preeti","id":"AF741","level":"JEE Main"},{"subj":"M","name":"Aman B","id":"AF773","level":"JEE Mains Plus"},{"subj":"P","name":"Gautam Kumar","id":"AF747","level":"JEE Mains Plus"}]},{"name":"Meritorious School Bhatinda 2","prog":"JEE","state":"Punjab","cat":"Nodal","enrol":"Not Found","apm":"","apm_id":"","pm":"PM TBH 1","pm_id":"","spm":"","spm_id":"","teachers":[{"subj":"B","name":"TBH","id":"","level":"TBH"},{"subj":"C","name":"Ankit","id":"","level":"Unknown"},{"subj":"M","name":"Rabi Prakash","id":"","level":"JEE Main"},{"subj":"P","name":"Jyoti","id":"AF786","level":"Unknown"}]},{"name":"Meritorious School Mohali","prog":"JEE","state":"Punjab","cat":"Cat 2 CoE","enrol":"Not Found","apm":"","apm_id":"","pm":"PM TBH 1","pm_id":"","spm":"","spm_id":"","teachers":[{"subj":"B","name":"Amith","id":"","level":"NEET"},{"subj":"C","name":"Bhumika Rani","id":"AF691","level":"JEE Main"},{"subj":"M","name":"Sachin Kumar","id":"AF831","level":"JEE Main"},{"subj":"P","name":"Mohd Noman","id":"AF775","level":"JEE Main"}]},{"name":"Meritorious School Mohali 2","prog":"JEE","state":"Punjab","cat":"Nodal","enrol":"Not Found","apm":"","apm_id":"","pm":"PM TBH 1","pm_id":"","spm":"","spm_id":"","teachers":[{"subj":"B","name":"TBH","id":"","level":"TBH"},{"subj":"C","name":"Saurabh Molpha","id":"AF890","level":"JEE Main"},{"subj":"M","name":"Manish Kumar","id":"AF740","level":"JEE Main"},{"subj":"P","name":"TBH","id":"","level":"TBH"}]},{"name":"RGJNV Dehradun","prog":"JEE","state":"Uttarakhand","cat":"Cat 2 CoE","enrol":"Not Found","apm":"","apm_id":"","pm":"PM TBH 1","pm_id":"","spm":"","spm_id":"","teachers":[{"subj":"C","name":"Kanhaiya","id":"AF448","level":"JEE Main"},{"subj":"M","name":"Ishika","id":"","level":"JEE Main"},{"subj":"P","name":"Pradhuman","id":"","level":"JEE Main"}]},{"name":"JNV Chandigarh","prog":"JEE + NEET","state":"Chandigarh (UT)","cat":"Cat 1 CoE","enrol":"Not Found","apm":"","apm_id":"","pm":"PM TBH 1","pm_id":"TBH137","spm":"","spm_id":"","teachers":[{"subj":"APC","name":"Shruti Setia","id":"","level":"CET"},{"subj":"B","name":"Shubham Jha","id":"AF662","level":"MBBS"},{"subj":"C","name":"Rahul Sharma","id":"","level":"JEE Advanced"},{"subj":"M","name":"Rajeev Kumar","id":"","level":"JEE Advanced"},{"subj":"P","name":"Karan Gupta","id":"AF574","level":"JEE Advanced"}]}]}]}]},"children":[]}]}]},"tbh_spms":[]};
+
+function switchTab(id){
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['nt','teaching'][i]===id));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+}
+
+/* ══ NT TREE ══ */
+function badge(s){
+  if(!s||s==='Active') return '';
+  if(s.includes('TBH')) return '<span class="badge b-tbh">TBH</span>';
+  if(s.includes('Notice')) return '<span class="badge b-not">NP</span>';
+  return '';
+}
+function buildNTNode(n,isRoot){
+  const isTBH=n.id.startsWith('TBH');
+  const cls=isRoot?'root-card':(isTBH?'tbh-card':'');
+  const hasKids=n.children&&n.children.length;
+  const tog=hasKids?'<span class="toggle">▼</span>':'<span class="toggle" style="opacity:0">·</span>';
+  const ds=(n.name+' '+n.desig+' '+n.id+' '+n.fn).toLowerCase();
+  let li=`<li><span class="node" onclick="toggleNT(this)">
+    ${tog}<div class="node-card ${cls}" data-s="${ds}">
+      <div class="nrow"><span class="nname">${n.name}</span><span class="nid">${n.id}</span>${badge(n.status)}</div>
+      <div class="ndesig">${n.desig||''}${n.fn?' · <em>'+n.fn+'</em>':''}</div>
+    </div></span>`;
+  if(hasKids){ li+='<ul class="children">'; n.children.forEach(c=>{li+=buildNTNode(c,false);}); li+='</ul>'; }
+  return li+'</li>';
+}
+function renderNT(){
+  const w=document.getElementById('nt-wrap');
+  const umCard=(p,bclass='',blabel='')=>`<div class="um-card ${p.id.startsWith('TBH')?'tbh-um':''}" data-s="${(p.name+p.desig+p.id).toLowerCase()}">
+    <b>${p.name}</b> <span style="font-family:monospace;font-size:.65rem;opacity:.6">${p.id}</span>
+    ${bclass?`<span class="badge ${bclass}" style="margin-left:4px">${blabel}</span>`:''}
+    <div style="font-size:.65rem;color:#7a9ab0">${p.desig||''}</div>
+    ${p.orphan_reason?`<div style="font-size:.62rem;color:#c07030;margin-top:2px">⚠ ${p.orphan_reason}</div>`:''}</div>`;
+  const umHtml=(D.nt_exits&&D.nt_exits.length?`<div class="section-title" style="margin-top:0">Exits (${D.nt_exits.length})</div><div class="unmapped-wrap">${D.nt_exits.map(p=>umCard(p,'b-exit','Exit')).join('')}</div>`:'')
+    +(D.nt_orphaned&&D.nt_orphaned.length?`<div class="section-title">Orphaned — manager exited (${D.nt_orphaned.length})</div><div class="unmapped-wrap">${D.nt_orphaned.map(p=>umCard(p,'b-orph','Orph')).join('')}</div>`:'')
+    +`<div class="section-title">No RM / Unresolved (${D.nt_no_rm.length})</div><div class="unmapped-wrap">${D.nt_no_rm.map(p=>umCard(p)).join('')}</div>`;
+  w.innerHTML=`<div class="two-col">
+    <div><div class="section-title">Co-CEO · Akshay Saxena</div><ul class="tree" id="ta">${buildNTNode(D.nt_akshay,true)}</ul></div>
+    <div><div class="section-title">Co-CEO · Vandana Goyal</div><ul class="tree" id="tv">${buildNTNode(D.nt_vandana,true)}</ul></div>
+  </div>
+  <div class="section-title" style="margin-top:16px">⚠ Unassigned (${(D.nt_exits||[]).length+(D.nt_orphaned||[]).length+(D.nt_no_rm||[]).length})</div>
+  <div class="unmapped-wrap">${umHtml}</div>`;
+  function cnt(n){return 1+(n.children||[]).reduce((a,c)=>a+cnt(c),0);}
+  const totalUnassigned=(D.nt_exits||[]).length+(D.nt_orphaned||[]).length+(D.nt_no_rm||[]).length;
+  document.getElementById('nt-stats').textContent=`${cnt(D.nt_akshay)+cnt(D.nt_vandana)} in tree · ${totalUnassigned} unassigned`;
+  ['ta','tv'].forEach(id=>{
+    const root=document.getElementById(id);
+    root&&root.querySelectorAll('ul.children ul.children ul.children').forEach(u=>{
+      u.style.display='none';
+      const t=u.previousElementSibling&&u.previousElementSibling.querySelector('.toggle');
+      if(t)t.textContent='▶';
+    });
+  });
+}
+function toggleNT(el){
+  const ul=el.parentElement.querySelector('ul.children');
+  if(!ul)return;
+  const open=ul.style.display!=='none';
+  ul.style.display=open?'none':'';
+  const t=el.querySelector('.toggle');
+  if(t)t.textContent=open?'▶':'▼';
+}
+function expandAll(){document.querySelectorAll('#nt-wrap ul.children').forEach(u=>u.style.display='');document.querySelectorAll('#nt-wrap .toggle').forEach(t=>t.textContent='▼');}
+function collapseAll(){document.querySelectorAll('#nt-wrap ul.children').forEach(u=>u.style.display='none');document.querySelectorAll('#nt-wrap .toggle').forEach(t=>t.textContent='▶');}
+function filterNT(q){
+  q=q.toLowerCase().trim();
+  document.querySelectorAll('#nt-wrap .node-card').forEach(c=>{c.classList.toggle('hi',!!q&&c.dataset.s.includes(q));c.classList.toggle('dim',!!q&&!c.dataset.s.includes(q));});
+  document.querySelectorAll('#nt-wrap .um-card').forEach(c=>{c.style.opacity=(!q||c.dataset.s.includes(q))?'1':'0.2';});
+  if(q)expandAll();
+}
+
+/* ══ TEACHING TREE (NT card style) ══ */
+const LC={'JEE Mains Plus':'#0057b7','NEET':'#e63946','JEE Main':'#8338ec','JEE Advanced':'#06d6a0','MBBS':'#e8a000','CET':'#fb8500','Foundation':'#e76f51','Unknown':'#aaa'};
+
+// Convert teaching_mgmt nested structure → flat NT-compatible tree
+function convMgmt(node){
+  const kids=[];
+  if(node.spm_data) kids.push(...convSPMData(node.spm_data));
+  (node.children||[]).forEach(ch=>kids.push(convMgmt(ch)));
+  return {id:node.id,name:node.name,desig:node.desig||'',status:node.status||'Active',fn:'',children:kids};
+}
+function convSPMData(spmData){
+  const nodes=[];
+  for(const pm of (spmData.pms||[])){
+    const pmKids=[];
+    for(const apm of (pm.apms||[])){
+      const centreKids=(apm.centres||[]).map(c=>({
+        id:'ctr_'+c.name.replace(/\W+/g,'_'),name:c.name,
+        desig:[c.prog,c.state,c.cat].filter(Boolean).join(' · '),
+        status:'centre',fn:'',_centre:c,children:[]
+      }));
+      const unassignedAPM=(!apm.id&&apm.name==='Unassigned');
+      if(unassignedAPM){ pmKids.push(...centreKids); }
+      else{ pmKids.push({id:apm.id||'',name:apm.name,desig:'Associate Program Manager',
+        status:(apm.id||'').startsWith('TBH')?'TBH':'Active',fn:'APM',children:centreKids}); }
+    }
+    const unassignedPM=(!pm.id&&pm.name==='Unassigned');
+    if(unassignedPM){ nodes.push(...pmKids); }
+    else{ nodes.push({id:pm.id||'',name:pm.name,desig:'Program Manager',
+      status:(pm.id||'').startsWith('TBH')?'TBH':'Active',fn:'PM',children:pmKids}); }
+  }
+  return nodes;
+}
+
+function buildTeachNode(n,isRoot){
+  const isTBH=n.id&&n.id.startsWith('TBH');
+  const isCentre=n.status==='centre';
+  const ds=(n.name+' '+(n.desig||'')+' '+(n.id||'')).toLowerCase();
+
+  if(isCentre&&n._centre){
+    const c=n._centre;
+    const cbid='ctrT_'+n.id;
+    const tHtml=(c.teachers||[]).map(t=>{
+      const col=LC[t.level]||'#9ab0c0';
+      const tbh=!t.id||t.id.startsWith('TBH');
+      return `<div class="t-node ${tbh?'tbh-t':''}" title="${t.name} (${t.id||'TBH'}) · ${t.level}">
+        <span class="t-subj">${t.subj}</span> <span class="t-name">${t.name.split(' ')[0]}</span>
+        <span class="t-id">${t.id||'TBH'}</span>
+        <div><span class="t-lvl" style="background:${col}18;color:${col};border:1px solid ${col}40">${t.level||'—'}</span></div>
+      </div>`;
+    }).join('');
+    return `<li><span class="node" onclick="toggleCtrT('${cbid}',this)">
+      <span class="toggle">▶</span><div class="node-card ctr-teach-card" data-s="${ds}">
+        <div class="nrow"><span class="nname">${c.name}</span>
+          <span style="font-size:.62rem;background:#e0f0ff;color:#1a5a8a;padding:1px 5px;border-radius:3px;font-weight:700">${c.cat||''}</span>
+          <span style="font-size:.65rem;color:#9ab0c0;margin-left:3px">${c.prog||''}</span>
+        </div>
+        <div class="ndesig">${c.state||''}</div>
+      </div></span>
+      <div id="${cbid}" style="display:none;margin-left:22px;padding:4px 0">
+        <div class="teach-teachers">${tHtml||'<span style="color:#aaa;font-size:.7rem">No teachers mapped</span>'}</div>
+      </div>
+    </li>`;
+  }
+
+  const cls=isRoot?'root-card':(isTBH?'tbh-card':'');
+  const hasKids=n.children&&n.children.length;
+  const tog=hasKids?'<span class="toggle">▼</span>':'<span class="toggle" style="opacity:0">·</span>';
+  let li=`<li><span class="node" onclick="toggleNT(this)">
+    ${tog}<div class="node-card ${cls}" data-s="${ds}">
+      <div class="nrow"><span class="nname">${n.name}</span><span class="nid">${n.id||''}</span>${badge(n.status)}</div>
+      <div class="ndesig">${n.desig||''}${n.fn&&n.fn!==n.desig?' · <em>'+n.fn+'</em>':''}</div>
+    </div></span>`;
+  if(hasKids){
+    li+='<ul class="children">';
+    n.children.forEach(ch=>{li+=buildTeachNode(ch,false);});
+    li+='</ul>';
+  }
+  return li+'</li>';
+}
+
+function cntCentres(n){
+  if(n.status==='centre') return 1;
+  return (n.children||[]).reduce((a,c)=>a+cntCentres(c),0);
+}
+
+function renderTeaching(){
+  const w=document.getElementById('t-wrap');
+  const teachTree=convMgmt(D.teaching_mgmt);
+  const totalC=cntCentres(teachTree);
+
+  // Unassigned teachers from nt_no_rm
+  const unassT=(D.nt_no_rm||[]).filter(p=>
+    (p.fn||'').toLowerCase().includes('teach')||
+    (p.desig||'').toLowerCase().includes('teacher')||
+    (p.desig||'').toLowerCase().includes('master teacher')
+  );
+  const umHtml=unassT.length?
+    `<div class="section-title" style="margin-top:16px">⚠ Unassigned Teachers (${unassT.length})</div>
+    <div class="unmapped-wrap">${unassT.map(p=>`<div class="um-card" data-s="${(p.name+p.desig+p.id).toLowerCase()}">
+      <b>${p.name}</b> <span style="font-family:monospace;font-size:.65rem;opacity:.6">${p.id}</span>
+      <div style="font-size:.65rem;color:#7a9ab0">${p.desig||''}</div>
+    </div>`).join('')}</div>` : '';
+
+  w.innerHTML=`<ul class="tree" id="tt">${buildTeachNode(teachTree,true)}</ul>${umHtml}`;
+  document.getElementById('t-stats').textContent=`${totalC} centres · ${unassT.length} unassigned teacher${unassT.length!==1?'s':''}`;
+
+  // Collapse from APM level down by default
+  const root=document.getElementById('tt');
+  if(root){
+    root.querySelectorAll('ul.children ul.children ul.children ul.children').forEach(u=>{
+      u.style.display='none';
+      const t=u.previousElementSibling&&u.previousElementSibling.querySelector('.toggle');
+      if(t)t.textContent='▶';
+    });
+  }
+}
+
+function toggleCtrT(id,el){
+  const body=document.getElementById(id);
+  if(!body)return;
+  const open=body.style.display!=='none';
+  body.style.display=open?'none':'';
+  const t=el.querySelector('.toggle');
+  if(t)t.textContent=open?'▶':'▼';
+}
+function expandAllT(){
+  document.querySelectorAll('#t-wrap ul.children').forEach(u=>u.style.display='');
+  document.querySelectorAll('#t-wrap .toggle').forEach(t=>t.textContent='▼');
+  document.querySelectorAll('#t-wrap [id^="ctrT_"]').forEach(e=>e.style.display='');
+}
+function collapseAllT(){
+  document.querySelectorAll('#t-wrap ul.children').forEach(u=>u.style.display='none');
+  document.querySelectorAll('#t-wrap .toggle').forEach(t=>t.textContent='▶');
+  document.querySelectorAll('#t-wrap [id^="ctrT_"]').forEach(e=>e.style.display='none');
+}
+function filterT(q){
+  q=q.toLowerCase().trim();
+  if(!q){
+    document.querySelectorAll('#t-wrap .node-card').forEach(c=>{c.classList.remove('hi','dim');});
+    document.querySelectorAll('#t-wrap .um-card').forEach(c=>c.style.opacity='1');
+    return;
+  }
+  document.querySelectorAll('#t-wrap .node-card').forEach(c=>{
+    c.classList.toggle('hi',!!q&&c.dataset.s&&c.dataset.s.includes(q));
+    c.classList.toggle('dim',!!q&&(!c.dataset.s||!c.dataset.s.includes(q)));
+  });
+  document.querySelectorAll('#t-wrap .um-card').forEach(c=>{c.style.opacity=c.dataset.s&&c.dataset.s.includes(q)?'1':'0.2';});
+  if(q)expandAllT();
+}
+
+renderNT();
+renderTeaching();
+</script>
+</body>
+</html>
