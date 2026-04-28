@@ -146,7 +146,7 @@ function isLeave(p){
   return (s==='long leave'||s==='maternity'||a==='long leave')&&!isExit(p);
 }
 function isUntagged(p){ return p.source==='Centre Master (Untagged)'; }
-function isVacancy(p){ return p.type==='Teaching Staff (TBH)'; }
+function isVacancy(p){ return p.status==='TBH' && p.type==='Teaching Staff'; }
 function isTeacher(p){ return p.type==='Teaching Staff'||p.type==='Teaching Staff (TBH)'||p.type==='Vendor'; }
 function isTBH(p){ return p.id.startsWith('TBH'); }
 
@@ -194,7 +194,7 @@ function lvlStyle(l){
 
 /* ── render person card ─────────────────────────────── */
 function personCard(p,extra=''){
-  const tbh=isTBH(p)&&p.type!=='Teaching Staff';
+  const tbh=p.status==='TBH';
   const vend=p.type==='Vendor';
   const notice=p.status==='Under Notice period';
   let cls='card';
@@ -251,7 +251,7 @@ function renderNode(p,depth){
   const isRoot=depth===0;
 
   let cls='card'+(isRoot?' root-card':'');
-  const tbh=isTBH(p)&&p.type!=='Teaching Staff';
+  const tbh=p.status==='TBH';
   const vend=p.type==='Vendor';
   if(tbh&&!isRoot) cls='card tbh-card';
   if(vend) cls='card vendor-card';
