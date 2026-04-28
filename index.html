@@ -95,9 +95,6 @@ header span{font-size:.78rem;opacity:.7;margin-left:auto}
 </header>
 <div class="tabs">
   <div class="tab active" onclick="showTab('org',this)">Org</div>
-  <div class="tab" onclick="showTab('untagged',this)" id="tab-untagged">Untagged</div>
-  <div class="tab" onclick="showTab('exits',this)" id="tab-exits">Exits &amp; Leave</div>
-  <div class="tab" onclick="showTab('vacancies',this)" id="tab-vacancies">Vacancies</div>
   <div class="tab" onclick="showTab('centres',this)" id="tab-centres">Centres</div>
 </div>
 <div id="org" class="panel active">
@@ -108,10 +105,8 @@ header span{font-size:.78rem;opacity:.7;margin-left:auto}
     <span class="stats" id="org-stats"></span>
   </div>
   <div id="org-tree" class="tree-root"></div>
+  <div id="other-status" style="margin-top:24px"></div>
 </div>
-<div id="untagged" class="panel"><div id="untagged-content"></div></div>
-<div id="exits"    class="panel"><div id="exits-content"></div></div>
-<div id="vacancies" class="panel"><div id="vacancies-content"></div></div>
 <div id="centres" class="panel">
   <div class="toolbar" style="flex-wrap:wrap;gap:8px">
     <input type="text" id="ctr-search" placeholder="Search centre, name, AF ID, subject…" oninput="buildCentres()" style="width:230px">
@@ -133,39 +128,41 @@ header span{font-size:.78rem;opacity:.7;margin-left:auto}
 </div>
 
 <script>
-let RAW = []; // loaded from data.json
+let RAW = []; // loaded from data.js
 
-/* ── categorise ─────────────────────────────────────── */
-function isExit(p){
-  const a=p.apr.toLowerCase(), s=p.status.toLowerCase();
-  return s==='exit'||a.includes('exit')||a.includes('terminated')||
-         s==='long leave'||a==='long leave'||s==='maternity'||a==='maternity leave';
-}
-function isLeave(p){
-  const s=p.status.toLowerCase(),a=p.apr.toLowerCase();
-  return (s==='long leave'||s==='maternity'||a==='long leave')&&!isExit(p);
-}
-function isUntagged(p){ return p.source==='Centre Master (Untagged)'; }
-function isVacancy(p){ return p.status==='TBH' && p.type==='Teaching Staff'; }
-function isTeacher(p){ return p.type==='Teaching Staff'||p.type==='Teaching Staff (TBH)'||p.type==='Vendor'; }
-function isTBH(p){ return p.id.startsWith('TBH'); }
+/* ── categorise (status-only, using cols A–K) ───────── */
+function isActive(p){ return p.status==='Active' || p.status==='Active - Role Change'; }
+function isTeacher(p){ return p.type==='Teaching Staff' || p.type==='Vendor'; }
+function isTBH(p){ return (p.id||'').startsWith('TBH'); }
 
-let exits=[], untagged=[], vacancies=[], org=[], byId={}, children={};
+// status → label/colour for the bottom sections
+const STATUS_DEF = [
+  {key:'TBH',                 label:'TBH (Vacancies)',  bg:'#fff3e0', fg:'#e65100'},
+  {key:'Exit',                label:'Exits',            bg:'#ffebee', fg:'#c62828'},
+  {key:'Long Leave',          label:'Long Leave',       bg:'#e3f2fd', fg:'#1565c0'},
+  {key:'Maternity',           label:'Maternity',        bg:'#f3e5f5', fg:'#6a1b9a'},
+  {key:'Under Notice period', label:'Under Notice',     bg:'#fff8e1', fg:'#7a5000'},
+  {key:'Unassigned',          label:'Unassigned',       bg:'#eceff1', fg:'#37474f'},
+  {key:'Vendor',              label:'Vendors',          bg:'#ede0ff', fg:'#5a2080'}
+];
+
+let active=[], byId={}, children={}, nonActiveByStatus={};
 
 function recompute(){
-  exits    = RAW.filter(p=>isExit(p)||isLeave(p));
-  untagged = RAW.filter(p=>isUntagged(p)&&!isExit(p));
-  vacancies= RAW.filter(p=>isVacancy(p));
-  org      = RAW.filter(p=>!isExit(p)&&!isLeave(p)&&!isUntagged(p));
+  active = RAW.filter(isActive);
   byId={};
-  org.forEach(p=>{if(p.id)byId[p.id]=p;});
+  active.forEach(p=>{ if(p.id) byId[p.id]=p; });
   children={};
-  org.forEach(p=>{
+  active.forEach(p=>{
     const rid=p.rm_id;
-    if(rid&&rid!=='BOARD'&&rid!=='UNMAPPED'&&rid!==''&&byId[rid]){
-      if(!children[rid])children[rid]=[];
-      children[rid].push(p);
+    if(rid && rid!=='BOARD' && rid!=='AF BOARD' && rid!=='UNMAPPED' && rid!=='EXIT' && rid!=='' && byId[rid]){
+      (children[rid]=children[rid]||[]).push(p);
     }
+  });
+  nonActiveByStatus={};
+  RAW.forEach(p=>{
+    if(isActive(p)) return;
+    (nonActiveByStatus[p.status]=nonActiveByStatus[p.status]||[]).push(p);
   });
 }
 
@@ -260,7 +257,7 @@ function renderNode(p,depth){
   if(notice) badges+=`<span class="badge b-notice">Notice</span>`;
   if(tbh) badges+=`<span class="badge b-tbh">TBH</span>`;
   if(vend) badges+=`<span class="badge b-vendor">Vendor</span>`;
-  const desig=p.desig?`<div class="ndesig">${p.desig}${p.fn&&p.fn!==p.desig?' · '+p.fn:''}</div>`:'';
+  const desig=p.desig?`<div class="ndesig">${p.desig}</div>`:'';
   const id=p.id?`<span class="nid">${p.id}</span>`:'';
 
   let togIcon=hasChildren?'▾':'';
@@ -286,101 +283,81 @@ function renderNode(p,depth){
   return html;
 }
 
-/* ── build org tree ─────────────────────────────────── */
+/* ── build org tree + bottom sections ───────────────── */
 function buildOrg(){
-  // Board-level roots (rm_id = BOARD) → render as full trees at top
-  const boardRoots=org.filter(p=>(p.rm_id==='BOARD'||p.rm_id==='AF BOARD')&&!isTeacher(p));
-  // Everything else without a valid RM → collapsed "No RM" section
-  const noRmNT=org.filter(p=>{
-    const r=p.rm_id;
-    return (!r||r==='UNMAPPED'||!byId[r])&&!isTeacher(p)&&r!=='BOARD'&&r!=='AF BOARD';
-  });
-  const noRmTeachers=org.filter(p=>isTeacher(p)&&(!p.rm_id||!byId[p.rm_id]));
+  // Board-level roots (rm_id = BOARD/AF BOARD) → render as full trees at top
+  const boardRoots = active.filter(p => (p.rm_id==='BOARD'||p.rm_id==='AF BOARD') && !isTeacher(p));
+  const isResolved = p => p.rm_id && p.rm_id!=='UNMAPPED' && p.rm_id!=='EXIT' && byId[p.rm_id];
+
+  // Active without a resolved RM → "Untagged" orphan sections
+  const orphanNT      = active.filter(p => !isTeacher(p) && p.rm_id!=='BOARD' && p.rm_id!=='AF BOARD' && !isResolved(p));
+  const orphanTeacher = active.filter(p =>  isTeacher(p) && !isResolved(p));
 
   let h='';
-  boardRoots.forEach(r=>{ h+=renderNode(r,0); });
+  boardRoots.forEach(r => { h += renderNode(r,0); });
 
-  if(noRmNT.length){
-    h+=`<div class="orphan-section" style="margin-top:14px">
-      <div class="orphan-hdr" onclick="const b=this.nextElementSibling;b.style.display=b.style.display==='none'?'flex':'none'">
-        ⚑ No reporting manager assigned — Staff (${noRmNT.length})
-        <span style="font-size:.72rem;font-weight:400;margin-left:8px;opacity:.7">click to expand</span>
-      </div>
-      <div class="orphan-body" style="display:none">`;
-    noRmNT.forEach(p=>{
-      const tbh=p.id.startsWith('TBH');
-      h+=`<div class="o-chip${tbh?' style=\"background:#fffbf0;border-color:#e8d060\"':''}">
+  // ── Untagged sections (active but unrouted)
+  if(orphanNT.length){
+    h += orphanSection('⚑ Untagged — Staff with no resolved manager', orphanNT, p => `
+      <div class="o-chip">
         <b>${p.name}</b> <span style="font-size:.63rem;color:#9ab0c0">${p.id}</span>
         ${p.desig?`<span style="font-size:.68rem;color:#7a9ab0"> · ${p.desig}</span>`:''}
-      </div>`;
-    });
-    h+='</div></div>';
+        ${p.rm_nm?`<span style="font-size:.62rem;color:#aaa"> → ${p.rm_nm} (${p.rm_id||'?'})</span>`:''}
+      </div>`,
+      '#fff8f0', '#e8d8c0');
+  }
+  if(orphanTeacher.length){
+    h += orphanSection('⚑ Untagged — Teachers with no resolved manager', orphanTeacher, t => {
+      const sj = shortSubj(t.subj);
+      return `<div class="o-chip"><b>${sj||'—'}</b> ${t.name||'(TBH)'} <span style="font-size:.63rem;color:#9ab0c0">${t.id}</span>${t.ctr?' — '+t.ctr:''}</div>`;
+    }, '#fff8f0', '#e8d8c0');
   }
 
-  if(noRmTeachers.length){
-    h+=`<div class="orphan-section" style="margin-top:8px">
-      <div class="orphan-hdr" onclick="const b=this.nextElementSibling;b.style.display=b.style.display==='none'?'flex':'none'">
-        ⚑ No reporting manager assigned — Teachers (${noRmTeachers.length})
-        <span style="font-size:.72rem;font-weight:400;margin-left:8px;opacity:.7">click to expand</span>
-      </div>
-      <div class="orphan-body" style="display:none">`;
-    noRmTeachers.forEach(t=>{
-      const sj=shortSubj(t.subj);
-      h+=`<div class="o-chip"><b>${sj}</b> ${t.name} <span style="font-size:.63rem;color:#9ab0c0">${t.id}</span>${t.ctr?' — '+t.ctr:''}</div>`;
-    });
-    h+='</div></div>';
-  }
+  document.getElementById('org-tree').innerHTML = h;
+  document.getElementById('org-stats').textContent = `${active.length} active · ${orphanNT.length+orphanTeacher.length} untagged`;
 
-  document.getElementById('org-tree').innerHTML=h;
-  document.getElementById('org-stats').textContent=`${org.length} in org`;
+  // ── Other-status sections (everyone non-Active)
+  let other='';
+  STATUS_DEF.forEach(({key,label,bg,fg})=>{
+    const list = nonActiveByStatus[key]||[];
+    if(!list.length) return;
+    other += otherStatusSection(label, list, bg, fg);
+  });
+  // Catch any unexpected status not in STATUS_DEF
+  Object.keys(nonActiveByStatus).forEach(k=>{
+    if(STATUS_DEF.some(s=>s.key===k)) return;
+    other += otherStatusSection(`Other — ${k}`, nonActiveByStatus[k], '#f5f5f5', '#555');
+  });
+  document.getElementById('other-status').innerHTML = other;
 }
 
-/* ── build untagged tab ─────────────────────────────── */
-function buildUntagged(){
-  document.getElementById('tab-untagged').textContent=`Untagged (${untagged.length})`;
-  if(!untagged.length){document.getElementById('untagged-content').innerHTML='<p style="padding:20px;color:#7a9ab0">None.</p>';return;}
-  let h=`<table class="flat-table"><thead><tr><th>AF ID</th><th>Name</th><th>Type</th><th>Subject</th><th>Level</th><th>Centre</th><th>System</th><th>Apr Status</th></tr></thead><tbody>`;
-  untagged.forEach(p=>{
-    h+=`<tr><td style="font-family:monospace;font-size:.75rem">${p.id||'—'}</td><td><b>${p.name}</b></td><td>${p.type}</td><td>${p.subj||'—'}</td><td>${p.lvls||'—'}</td><td>${p.ctr||'—'}</td><td>${p.sys||'—'}</td><td>${p.apr||'—'}</td></tr>`;
-  });
-  h+='</tbody></table>';
-  document.getElementById('untagged-content').innerHTML=h;
+function orphanSection(title, list, rowFn, bg='#fff8f0', border='#e8d8c0'){
+  let inner = list.map(rowFn).join('');
+  return `<div class="orphan-section" style="margin-top:14px;background:${bg};border-color:${border}">
+    <div class="orphan-hdr" onclick="const b=this.nextElementSibling;b.style.display=b.style.display==='none'?'flex':'none'">
+      ${title} (${list.length})
+      <span style="font-size:.72rem;font-weight:400;margin-left:8px;opacity:.7">click to expand</span>
+    </div>
+    <div class="orphan-body" style="display:none">${inner}</div>
+  </div>`;
 }
 
-/* ── build exits tab ────────────────────────────────── */
-function buildExits(){
-  document.getElementById('tab-exits').textContent=`Exits & Leave (${exits.length})`;
-  if(!exits.length){document.getElementById('exits-content').innerHTML='<p style="padding:20px;color:#7a9ab0">None.</p>';return;}
-  const exList=exits.filter(p=>!isLeave(p));
-  const lvList=exits.filter(p=>isLeave(p));
-  let rows=(list,rowCls)=>list.map(p=>`<tr class="${rowCls}"><td style="font-family:monospace;font-size:.75rem">${p.id||'—'}</td><td><b>${p.name}</b></td><td>${p.type}</td><td>${p.desig||'—'}</td><td>${p.rm_nm||'—'}</td><td>${p.ctr||'—'}</td><td>${p.status||'—'}</td><td>${p.apr||'—'}</td></tr>`).join('');
-  let h=`<table class="flat-table"><thead><tr><th>AF ID</th><th>Name</th><th>Staff Type</th><th>Designation</th><th>Reporting To</th><th>Centre / CC</th><th>Status FY27</th><th>Apr 2026 Status</th></tr></thead><tbody>`;
-  if(exList.length) h+=`<tr><td colspan="8" style="background:#fff0f0;font-weight:700;color:#9a0000;font-size:.73rem;padding:6px 12px">EXITS (${exList.length})</td></tr>`+rows(exList,'exit-row');
-  if(lvList.length) h+=`<tr><td colspan="8" style="background:#f0f8ff;font-weight:700;color:#004080;font-size:.73rem;padding:6px 12px">LEAVE (${lvList.length})</td></tr>`+rows(lvList,'leave-row');
-  h+='</tbody></table>';
-  document.getElementById('exits-content').innerHTML=h;
-}
-
-/* ── build vacancies tab ────────────────────────────── */
-function buildVacancies(){
-  document.getElementById('tab-vacancies').textContent=`Vacancies (${vacancies.length})`;
-  if(!vacancies.length){document.getElementById('vacancies-content').innerHTML='<p style="padding:20px;color:#7a9ab0">None.</p>';return;}
-  // Group by SPM then by centre
-  const bySpm={};
-  vacancies.forEach(v=>{
-    const skey=(v.rm_nm||v.spm||'No Manager Assigned');
-    if(!bySpm[skey])bySpm[skey]=[];
-    bySpm[skey].push(v);
-  });
-  let h=`<table class="flat-table"><thead><tr><th>AF ID</th><th>Centre</th><th>Subject</th><th>Level</th><th>System</th><th>Reporting To</th><th>SPM</th><th>Apr Status</th></tr></thead><tbody>`;
-  Object.keys(bySpm).sort().forEach(spm=>{
-    h+=`<tr><td colspan="8" style="background:#fffbe0;font-weight:700;color:#7a5000;font-size:.73rem;padding:6px 12px">▸ ${spm} (${bySpm[spm].length} slots)</td></tr>`;
-    bySpm[spm].forEach(v=>{
-      h+=`<tr><td style="font-family:monospace;font-size:.75rem">${v.id||'—'}</td><td>${v.ctr||'—'}</td><td>${v.subj||'—'}</td><td>${v.lvls||'—'}</td><td>${v.sys||'—'}</td><td>${v.rm_nm||'—'}</td><td>${v.spm||'—'}</td><td>${v.apr||'—'}</td></tr>`;
-    });
-  });
-  h+='</tbody></table>';
-  document.getElementById('vacancies-content').innerHTML=h;
+function otherStatusSection(label, list, bg, fg){
+  const rows = list.map(p=>{
+    const sj = isTeacher(p)?shortSubj(p.subj):'';
+    const idTag = p.id?`<span style="font-size:.63rem;color:#9ab0c0;font-family:monospace">${p.id}</span>`:'';
+    const ctr = p.ctr?`<span style="font-size:.65rem;color:#7a9ab0"> — ${p.ctr}</span>`:'';
+    const desig = p.desig?`<span style="font-size:.66rem;color:#7a9ab0"> · ${p.desig}</span>`:'';
+    const subjTag = sj?`<span style="font-size:.6rem;font-weight:700;color:#0e6655;margin-right:4px">${sj}</span>`:'';
+    return `<div class="o-chip">${subjTag}<b>${p.name||'(TBH)'}</b> ${idTag}${desig}${ctr}</div>`;
+  }).join('');
+  return `<div class="orphan-section" style="margin-top:10px;background:${bg};border-color:${fg}33">
+    <div class="orphan-hdr" style="background:${bg};color:${fg}" onclick="const b=this.nextElementSibling;b.style.display=b.style.display==='none'?'flex':'none'">
+      ${label} (${list.length})
+      <span style="font-size:.72rem;font-weight:400;margin-left:8px;opacity:.7">click to expand</span>
+    </div>
+    <div class="orphan-body" style="display:none">${rows}</div>
+  </div>`;
 }
 
 /* ── toggle ─────────────────────────────────────────── */
@@ -455,8 +432,8 @@ function doSearch(q){
 
 /* ── centres tab ────────────────────────────────────── */
 function buildCentres(){
-  const TEACHING = new Set(['Teaching Staff','Teaching Staff (TBH)','Vendor']);
-  const SKIP_STATUS = new Set(['Exit','On Leave']);
+  const TEACHING = new Set(['Teaching Staff','Vendor']);
+  const SKIP_STATUS = new Set(['Exit','Long Leave','Maternity']);
   const SKIP_CTR = new Set(['','nan','NA','Bench']);
 
   // group RAW by centre
@@ -540,11 +517,10 @@ function showTab(id,el){
 RAW = window.__ORG_DATA__ || [];
 recompute();
 buildOrg();
-buildUntagged();
-buildExits();
-buildVacancies();
 buildCentres();
-document.getElementById('hdr-counts').textContent=`${org.length} active · ${untagged.length} untagged · ${exits.length} exits · ${vacancies.length} vacancies · April 27 2026`;
+const nonActiveCount = Object.values(nonActiveByStatus).reduce((s,arr)=>s+arr.length,0);
+document.getElementById('hdr-counts').textContent =
+  `${active.length} active · ${nonActiveCount} other (TBH/Exit/Leave/Unassigned/etc.) · ${RAW.length} total`;
 </script>
 </body>
 </html>
