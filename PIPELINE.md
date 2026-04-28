@@ -3,7 +3,7 @@
 ## Overview
 
 The org dashboard (`index.html`) is a fully local, file-based HTML app. It reads
-employee data from `data.js` (a JS file generated from the **Payroll FY27**
+employee data from `data.js` (a JS file generated from the **Employee DB - April 27 - Frozen**
 sheet of a Google Sheet) and renders five tabs: Org Tree, Untagged, Exits &
 Leave, Vacancies, and Centres.
 
@@ -19,11 +19,16 @@ browser, or visit https://asaxena.github.io/AvantiBudget/.
 | Master spreadsheet | Google Sheet **"Final Employee Master - April 2026"** |
 | Sheet ID | `1jcXJAGlVRJlj0_GenWiU32m_aeX7TO9ytXt_4XR4kRA` |
 | URL | https://docs.google.com/spreadsheets/d/1jcXJAGlVRJlj0_GenWiU32m_aeX7TO9ytXt_4XR4kRA/edit |
-| Authoritative tab | **`Payroll FY27`** — every other tab is reference only |
+| Authoritative tab | **`Employee DB - April 27 - Frozen`** — every other tab is reference only |
 
-**Only `Payroll FY27` is read by the pipeline.** Akshay edits this sheet
-manually. Claude downloads it as xlsx, regenerates `data.js`, and commits +
+**Only `Employee DB - April 27 - Frozen` is read by the pipeline.** Akshay edits this
+sheet manually. Claude downloads it as xlsx, regenerates `data.js`, and commits +
 pushes to https://github.com/asaxena/AvantiBudget.
+
+> **Sheet name has changed before** (was `Payroll FY27` in earlier versions).
+> If the script errors with `Worksheet ... does not exist`, ask which tab is
+> the new authoritative source and update the `SHEET` constant in
+> `regenerate_data_js.py`.
 
 ---
 
@@ -31,57 +36,64 @@ pushes to https://github.com/asaxena/AvantiBudget.
 
 | File | Lives in | Purpose |
 |------|----------|---------|
-| Google Sheet "Final Employee Master - April 2026" | Drive | Single source of truth. Edit only the `Payroll FY27` tab. |
+| Google Sheet "Final Employee Master - April 2026" | Drive | Single source of truth. Edit only the `Employee DB - April 27 - Frozen` tab. |
 | `Final Employee Master - April 2026.xlsx` | Local working dir (parent of repo) | Throwaway xlsx export from Drive. Not committed. |
 | `regenerate_data_js.py` | Local working dir | Reads the xlsx, writes `data.js`. Not committed. |
-| `data.js` | Repo | Generated from `Payroll FY27`. Sets `window.__ORG_DATA__` — a flat JSON array of all staff rows. **The only file in the repo that gets regenerated.** |
+| `data.js` | Repo | Generated from the sheet. Sets `window.__ORG_DATA__` — a flat JSON array of all staff rows. **The only file in the repo that gets regenerated.** |
 | `index.html` | Repo | The dashboard. Reads `window.__ORG_DATA__`, computes derived state, renders all tabs. Edited by hand only when UI changes. |
 
 ---
 
-## Step 1 — The Payroll FY27 Sheet
+## Step 1 — The `Employee DB - April 27 - Frozen` Sheet
 
 ### Column Layout (exact header names map to JS field names)
 
 | Col | Header in sheet | JS field | Notes |
 |-----|-----------------|----------|-------|
-| A | AF ID | `id` | `AF###` for staff, `TBH###` for vacancies |
+| A | AF ID | `id` | `AF###` for staff, `TBH###` for vacancies, `BRL###` / `SRL###` for vendors |
 | B | Name | `name` | |
 | C | Staff Type | `type` | See type values below |
-| D | Designation (New) | `desig` | |
-| E | Status FY27 | `status` | Active / Exit / Long Leave / Maternity / TBH / Under Notice period / Unassigned / Vendor / Active - Role Change / Not needed |
-| F | Reporting To (New) | `rm_nm` | Display name of direct manager |
-| G | RM AF ID | `rm_id` | AF ID of direct manager (`BOARD` for CEO level, `UNMAPPED` for orphans) |
-| H | Function | `fn` | |
-| I | Subject(s) | `subj` | Comma-separated, e.g. `Physics,Chemistry` |
-| J | Level(s) | `lvls` | e.g. `JEE Advanced`, `NEET` |
-| K | APM | `apm` | Academic Program Manager name |
-| L | APM AF ID | `apm_id` | |
-| M | PM | `pm` | Program Manager name |
-| N | PM AF ID | `pm_id` | |
-| O | SPM | `spm` | Senior Program Manager name |
-| P | SPM AF ID | `spm_id` | |
-| Q | Reporting Manager (Budget) | — | Ignored — used only inside the sheet for budget reporting. |
-| R | RM AFID (Budget) | — | Ignored. |
-| S | Centre(s) / Cost Centre (Budget) | `ctr` | Full centre name |
-| T | System(s) | `sys` | e.g. `JNV`, `EMRS`, `Meritorious` |
-| U | State(s) | `state` | |
-| V | Mar 2026 Payroll | `mar` | Found / Not Found / — |
-| W | Apr 2026 Status | `apr` | Current / Exit date / New Joiner / Not on Apr payroll |
-| X | Source | `source` | NT Master Only / Centre Master (Tagged) / Centre Master (Untagged) / Centre Master (TBH) / Centre Master (Vendor) / Teacher Planning (TBH) / April New Joiner |
+| D | Centre | — | **Ignored** — singular per-row centre (legacy/duplicate of column K). |
+| E | Subject | — | **Ignored** — singular per-row subject (duplicate of M). |
+| F | Level | — | **Ignored** — singular per-row level (duplicate of N). |
+| G | Designation (New) | `desig` | |
+| H | Status FY27 | `status` | Active / Active - Role Change / Exit / Long Leave / Maternity / TBH / Under Notice period / Unassigned / Vendor |
+| I | Reporting To (New) | `rm_nm` | Display name of direct manager |
+| J | RM AF ID | `rm_id` | AF ID of direct manager (`BOARD` for CEO level, `UNMAPPED` for orphans, `EXIT` if their manager has left) |
+| K | Centre(s) / Cost Centre (Budget) | `ctr` | Full centre name |
+| L | Function | `fn` | |
+| M | Subject(s) | `subj` | Comma-separated, e.g. `Physics,Chemistry` |
+| N | Level(s) | `lvls` | e.g. `JEE Advanced`, `NEET` |
+| O | APM | `apm` | Academic Program Manager name |
+| P | APM AF ID | `apm_id` | |
+| Q | PM | `pm` | Program Manager name |
+| R | PM AF ID | `pm_id` | |
+| S | SPM | `spm` | Senior Program Manager name |
+| T | SPM AF ID | `spm_id` | |
+| U | Reporting Manager (Budget) | — | Ignored — used only inside the sheet for budget reporting. |
+| V | RM AFID (Budget) | — | Ignored. |
+| W | System(s) | `sys` | e.g. `JNV`, `EMRS`, `Meritorious` |
+| X | State(s) | `state` | |
+| Y | Mar 2026 Payroll | `mar` | Found / Not Found / — |
+| Z | Apr 2026 Status | `apr` | Current / Exit date / New Joiner / Not on Apr payroll |
+| AA | Source | `source` | NT Master Only / Centre Master (Tagged) / Centre Master (Untagged) / Centre Master (Vendor) / April New Joiner / blank |
 
 > The export script looks up columns **by header name**, so column reordering
-> in the sheet is fine. Renaming a header will break the script — search for
-> the new name in `FIELD_MAP` before saving.
+> in the sheet is fine. Renaming a header will break the script — update
+> `FIELD_MAP` in `regenerate_data_js.py` to match the new header.
 
 ### Staff Type Values
 
 | `type` value | Meaning |
 |-------------|---------|
 | `Non-Teaching Staff` | NT staff (managers, ops, etc.) |
-| `Teaching Staff` | Active tagged teacher |
-| `Teaching Staff (TBH)` | Open teacher vacancy |
-| `Vendor` | Contract/vendor teacher |
+| `Teaching Staff` | Teacher row — could be active or a vacancy depending on `Status FY27` |
+| `Vendor` | Contract/vendor teacher (Brilliant, SRL, etc.) |
+
+> **Teacher vacancies are no longer a separate type.** A row with
+> `Staff Type = Teaching Staff` and `Status FY27 = TBH` is an open teacher slot
+> (typically with an AF ID like `TBH123`). The dashboard's `isVacancy` reflects
+> this — see Classification Functions below.
 
 ### Row Classification Rules
 
@@ -91,7 +103,7 @@ These rules are used by both the export script and the JS dashboard:
 |---------------|-----------|
 | **Exit / Leave** | `status` is `Exit`, `Long Leave`, or `Maternity`; OR `apr` contains `Exit`, `Terminated`, or `maternity leave` |
 | **Untagged** | `source` is `Centre Master (Untagged)` |
-| **Vacancy** | `type` is `Teaching Staff (TBH)` |
+| **Vacancy** | `status` is `TBH` AND `type` is `Teaching Staff` |
 | **Active org** | Everyone not in the above three groups |
 
 ### Banner / Section Rows
@@ -122,7 +134,7 @@ import openpyxl
 
 ROOT = Path(__file__).parent
 XLSX = ROOT / "Final Employee Master - April 2026.xlsx"
-SHEET = "Payroll FY27"
+SHEET = "Employee DB - April 27 - Frozen"
 OUT = ROOT / "AvantiBudget" / "data.js"
 
 FIELD_MAP = {
@@ -180,7 +192,7 @@ for row in ws.iter_rows(min_row=2, values_only=True):
     RAW.append(rec)
 
 with OUT.open("w", encoding="utf-8") as f:
-    f.write("/* Auto-generated from 'Payroll FY27' sheet of Final Employee Master - April 2026.xlsx — do not edit manually */\n")
+    f.write("/* Auto-generated from 'Employee DB - April 27 - Frozen' sheet — do not edit manually */\n")
     f.write("window.__ORG_DATA__ = ")
     f.write(json.dumps(RAW, ensure_ascii=False, separators=(',', ':')))
     f.write(";")
@@ -267,12 +279,16 @@ function isLeave(p) {
   return (s==='long leave' || s==='maternity' || a==='long leave') && !isExit(p);
 }
 function isUntagged(p) { return p.source === 'Centre Master (Untagged)'; }
-function isVacancy(p)  { return p.type === 'Teaching Staff (TBH)'; }
+function isVacancy(p)  { return p.status === 'TBH' && p.type === 'Teaching Staff'; }
 function isTeacher(p)  {
   return p.type==='Teaching Staff' || p.type==='Teaching Staff (TBH)' || p.type==='Vendor';
 }
 function isTBH(p)      { return p.id.startsWith('TBH'); }
 ```
+
+> The `Teaching Staff (TBH)` clause inside `isTeacher` is a backwards-compat
+> leftover — no current rows carry that type, but the OR keeps the dashboard
+> working if the sheet schema ever flips back.
 
 ### Tree Building Logic (`buildOrg`)
 
@@ -293,7 +309,7 @@ container rather than displayed as individual person cards.
 | Org Tree | `org` array | `buildOrg()` |
 | Untagged | `untagged` array | `buildUntagged()` |
 | Exits & Leave | `exits` array | `buildExits()` |
-| Vacancies | `vacancies` array (TBH slots only) | `buildVacancies()` |
+| Vacancies | `vacancies` array (Teaching Staff with `Status FY27 = TBH`) | `buildVacancies()` |
 | Centres | `RAW` filtered live to teaching staff | `buildCentres()` |
 
 ### Search Logic (Org Tree tab)
@@ -309,17 +325,17 @@ The search box targets two distinct node types:
 
 To update after editing the Google Sheet:
 
-1. Edit the `Payroll FY27` tab in **Final Employee Master - April 2026**.
-2. Tell Claude "regenerate data.js" (or similar). Claude will:
+1. Edit the `Employee DB - April 27 - Frozen` tab in **Final Employee Master - April 2026**.
+2. Tell Claude "regenerate data.js" (or just "regenerate"). Claude will:
    - Download the latest sheet as xlsx.
    - Run `regenerate_data_js.py` to rewrite `data.js`.
    - Diff against the previous version (row count, type/status/source bucket counts, ID set).
    - Commit and push to `main`.
 3. GitHub Pages redeploys https://asaxena.github.io/AvantiBudget/ within ~1 min.
 
-**To add a new TBH slot:** add a row with `Staff Type = Teaching Staff (TBH)`, assign the next TBH ID, set `RM AF ID` to the APM's AF ID.
+**To add a new TBH slot:** add a row with `Staff Type = Teaching Staff`, `Status FY27 = TBH`, the next sequential `TBH###` AF ID, and `RM AF ID` set to the APM's AF ID.
 
-**To convert a TBH to a real hire:** update `AF ID` → real AF ID, `Name` → real name, `Staff Type` → `Teaching Staff`, update `Status FY27` / `Mar 2026 Payroll` / `Apr 2026 Status`.
+**To convert a TBH to a real hire:** update `AF ID` → real AF ID, `Name` → real name (keep `Staff Type = Teaching Staff`), set `Status FY27 = Active`, update `Mar 2026 Payroll` / `Apr 2026 Status`.
 
 ---
 
@@ -327,10 +343,12 @@ To update after editing the Google Sheet:
 
 | Pitfall | Fix |
 |---------|-----|
+| `Worksheet '<name>' does not exist` | Sheet was renamed. Update the `SHEET` constant in `regenerate_data_js.py` and PIPELINE.md. |
+| Vacancies tab shows 0 after a regen | Schema change in the sheet — the dashboard's `isVacancy` may be out of sync with the new flag (currently `status === 'TBH' && type === 'Teaching Staff'`). |
 | `"Error loading data.json: Failed to fetch"` | Never use `fetch()` on file://. Use `<script src="data.js">` + `window.__ORG_DATA__` instead. |
 | Org tree is blank / derived arrays are empty | `exits/untagged/vacancies/org/byId/children` must be `let` (not `const`), and `recompute()` must be called after `RAW` is assigned — not at parse time when `RAW` is still `[]`. |
 | Person not appearing under their manager | Check `RM AF ID` in the sheet exactly matches the manager's `AF ID` (case-sensitive, no extra spaces). `EXIT` as an `RM AF ID` value will route the person to the orphan section. |
 | Centre cards always visible during search | The `ctrBlock()` function must add a `data-search` attribute to each `.ctr-card`. `doSearch()` must target `.ctr-card[data-search]`, not just `.card`. |
 | Banner rows polluting RAW | Export script skips rows where both `AF ID` and `Name` are blank, or where `Name` doesn't start with a letter (merged section headers). |
 | `None` / `nan` strings in data | openpyxl returns Python `None` for blank cells; `str(None)` = `"None"`. Normalised in the script with `if rec[k].lower() in ('none','nan'): rec[k] = ''`. |
-| Renamed a column in the sheet and `data.js` regen fails | The script exits with `Missing expected columns in 'Payroll FY27': [...]`. Update `FIELD_MAP` in `regenerate_data_js.py` to match the new header. |
+| Renamed a column in the sheet and `data.js` regen fails | The script exits with `Missing expected columns in '<sheet>': [...]`. Update `FIELD_MAP` in `regenerate_data_js.py` to match the new header. |
